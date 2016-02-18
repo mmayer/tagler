@@ -8,7 +8,32 @@
 
 /* Begin PBXBuildFile section */
 		28249A151C74F07500B0C1E5 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 28249A141C74F07500B0C1E5 /* main.m */; };
+		28249A301C74F7DD00B0C1E5 /* MP42Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28249A241C74F2FB00B0C1E5 /* MP42Foundation.framework */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		28249A231C74F2FB00B0C1E5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 28249A1C1C74F2FB00B0C1E5 /* MP42Foundation.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = A9B9C1ED182391DF00416A4E;
+			remoteInfo = MP42Foundation;
+		};
+		28249A251C74F2FB00B0C1E5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 28249A1C1C74F2FB00B0C1E5 /* MP42Foundation.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = A9B9C204182391DF00416A4E;
+			remoteInfo = MP42FoundationTests;
+		};
+		28249A271C74F2FB00B0C1E5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 28249A1C1C74F2FB00B0C1E5 /* MP42Foundation.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = A910B5A318394E900064028F;
+			remoteInfo = mp42;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		28249A0F1C74F07400B0C1E5 /* CopyFiles */ = {
@@ -25,6 +50,7 @@
 /* Begin PBXFileReference section */
 		28249A111C74F07400B0C1E5 /* tagler */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = tagler; sourceTree = BUILT_PRODUCTS_DIR; };
 		28249A141C74F07500B0C1E5 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		28249A1C1C74F2FB00B0C1E5 /* MP42Foundation.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = MP42Foundation.xcodeproj; path = MP42Foundation/MP42Foundation.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +58,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				28249A301C74F7DD00B0C1E5 /* MP42Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -41,6 +68,7 @@
 		28249A081C74F07400B0C1E5 = {
 			isa = PBXGroup;
 			children = (
+				28249A1C1C74F2FB00B0C1E5 /* MP42Foundation.xcodeproj */,
 				28249A131C74F07400B0C1E5 /* tagler */,
 				28249A121C74F07400B0C1E5 /* Products */,
 			);
@@ -60,6 +88,16 @@
 				28249A141C74F07500B0C1E5 /* main.m */,
 			);
 			path = tagler;
+			sourceTree = "<group>";
+		};
+		28249A1D1C74F2FB00B0C1E5 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				28249A241C74F2FB00B0C1E5 /* MP42Foundation.framework */,
+				28249A261C74F2FB00B0C1E5 /* MP42FoundationFoundationTests.xctest */,
+				28249A281C74F2FB00B0C1E5 /* libmp42.a */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -106,12 +144,42 @@
 			mainGroup = 28249A081C74F07400B0C1E5;
 			productRefGroup = 28249A121C74F07400B0C1E5 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 28249A1D1C74F2FB00B0C1E5 /* Products */;
+					ProjectRef = 28249A1C1C74F2FB00B0C1E5 /* MP42Foundation.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				28249A101C74F07400B0C1E5 /* tagler */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		28249A241C74F2FB00B0C1E5 /* MP42Foundation.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = MP42Foundation.framework;
+			remoteRef = 28249A231C74F2FB00B0C1E5 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		28249A261C74F2FB00B0C1E5 /* MP42FoundationFoundationTests.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = MP42FoundationFoundationTests.xctest;
+			remoteRef = 28249A251C74F2FB00B0C1E5 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		28249A281C74F2FB00B0C1E5 /* libmp42.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libmp42.a;
+			remoteRef = 28249A271C74F2FB00B0C1E5 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXSourcesBuildPhase section */
 		28249A0D1C74F07400B0C1E5 /* Sources */ = {
@@ -132,7 +200,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_ARC = NO;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
@@ -163,7 +231,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = YES;
-				ONLY_ACTIVE_ARCH = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -175,7 +243,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_ARC = NO;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
@@ -200,6 +268,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				ONLY_ACTIVE_ARCH = NO;
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -207,6 +276,8 @@
 		28249A191C74F07500B0C1E5 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"ADDITIONAL_SDKS[arch=i386]" = "";
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -214,6 +285,7 @@
 		28249A1A1C74F07500B0C1E5 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -237,6 +309,7 @@
 				28249A1A1C74F07500B0C1E5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
