@@ -10,11 +10,16 @@
 
 #import <unistd.h>
 
-int tagler_main(int argc, const char *argv[])
+int tagler_main(int argc, char * const argv[])
 {
+    int c;
+
+    while ((c = getopt(argc, argv, "T:g:i:")) != -1) {
+    }
+    return 0;
 }
 
-int main(int argc, const char *argv[])
+int main(int argc, char * const argv[])
 {
     int ret;
 
