@@ -8,11 +8,18 @@
 
 #import <Foundation/Foundation.h>
 
+#import <unistd.h>
+
+int tagler_main(int argc, const char *argv[])
+{
+}
+
 int main(int argc, const char *argv[])
 {
+    int ret;
+
     @autoreleasepool {
-        // insert code here...
-        NSLog(@"Hello, World!");
+        ret = tagler_main(argc, argv);
     }
-    return 0;
+    return ret;
 }
