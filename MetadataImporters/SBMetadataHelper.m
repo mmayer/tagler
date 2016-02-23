@@ -160,6 +160,7 @@
 + (nullable NSData *)downloadDataFromURL:(NSURL *)url withCachePolicy:(SBCachePolicy)policy error:(NSError **)error  {
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSString *bundleName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleIdentifier"];
+    if (!bundleName) bundleName = @"";
     NSURL *cacheURL = [[[fileManager URLsForDirectory:NSCachesDirectory inDomains:NSUserDomainMask]
                         firstObject] URLByAppendingPathComponent:bundleName];
 
