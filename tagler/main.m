@@ -6,16 +6,28 @@
 //  Copyright © 2016 Markus Mayer. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+//#import <Foundation/Foundation.h>
+
+#import <MP42Foundation/MP42Image.h>
+#import <MP42Foundation/MP42Metadata.h>
+#import <MP42Foundation/MP42Languages.h>
 
 #import <libgen.h>
 #import <unistd.h>
+
+int process_file(const char * const fname)
+{
+    printf("file %s\n", fname);
+
+    return 0;
+}
 
 int tagler_main(int argc, char * const argv[])
 {
     int ch, i;
     char *errp;
     int tracks = 0;
+    int ret = 0;
     int image_number = -1;
     char *genre = NULL;
     const char *prg = basename(argv[0]);
@@ -55,10 +67,13 @@ int tagler_main(int argc, char * const argv[])
     }
 
     for (i = optind; i < argc; i++) {
-        printf("file %d: %s\n", i - optind + 1, argv[i]);
+        ret = process_file(argv[i]);
+        if (ret < 0) {
+            break;
+        }
     }
 
-    return 0;
+    return ret;
 }
 
 int main(int argc, char * const argv[])
