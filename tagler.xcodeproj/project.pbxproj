@@ -48,6 +48,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		282219071C7BB0800031C9CE /* MetadataImporters */ = {isa = PBXFileReference; lastKnownFileType = folder; name = MetadataImporters; path = ../MetadataImporters; sourceTree = "<group>"; };
 		28249A111C74F07400B0C1E5 /* tagler */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = tagler; sourceTree = BUILT_PRODUCTS_DIR; };
 		28249A141C74F07500B0C1E5 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		28249A1C1C74F2FB00B0C1E5 /* MP42Foundation.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = MP42Foundation.xcodeproj; path = MP42Foundation/MP42Foundation.xcodeproj; sourceTree = "<group>"; };
@@ -85,6 +86,7 @@
 		28249A131C74F07400B0C1E5 /* tagler */ = {
 			isa = PBXGroup;
 			children = (
+				282219071C7BB0800031C9CE /* MetadataImporters */,
 				28249A141C74F07500B0C1E5 /* main.m */,
 			);
 			path = tagler;
