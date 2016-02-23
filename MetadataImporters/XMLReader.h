@@ -28,7 +28,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface XMLReader : NSObject  <NSXMLParserDelegate> {
-	
+
     NSMutableArray *dictionaryStack;
     NSMutableString *textInProgress;
     NSError **errorPointer;

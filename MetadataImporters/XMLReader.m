@@ -35,10 +35,10 @@ NSString *const kXMLReaderTextNodeKey = @"text";
 @implementation NSDictionary (XMLReaderNavigation)
 
 - (id)retrieveForPath:(NSString *)navPath {
-    
+
     // Split path on dots
     NSArray *pathItems = [navPath componentsSeparatedByString:@"."];
-    
+
     // Enumerate through array
     NSEnumerator *e = [pathItems objectEnumerator];
     NSString *path;
@@ -47,10 +47,10 @@ NSString *const kXMLReaderTextNodeKey = @"text";
     id branch = [self objectForKey:[e nextObject]];
     int count = 1;
     while (path = [e nextObject]) {
-        
+
         // Check if this branch is an NSArray
         if ([branch isKindOfClass:[NSArray class]]) {
-            
+
             if ([path isEqualToString:@"last"]) {
                 branch = [branch lastObject];
             } else {
@@ -60,17 +60,17 @@ NSString *const kXMLReaderTextNodeKey = @"text";
                     branch = nil;
                 }
             }
-            
+
         } else {
-            
+
             //branch is assumed to be an NSDictionary
             branch = [branch objectForKey:path];
-            
+
         }
-        
+
         count++;
     }
-    
+
     return branch;
 }
 
@@ -93,7 +93,7 @@ NSString *const kXMLReaderTextNodeKey = @"text";
 #pragma mark Public methods
 
 + (NSDictionary *)dictionaryForXMLData:(NSData *)data error:(NSError **)error {
-	
+
     XMLReader *reader = [[XMLReader alloc] initWithError:error];
     NSDictionary *rootDictionary = [reader objectWithData:data];
     [reader release];
@@ -101,7 +101,7 @@ NSString *const kXMLReaderTextNodeKey = @"text";
 }
 
 + (NSDictionary *)dictionaryForXMLString:(NSString *)string error:(NSError **)error {
-	
+
     NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
     return [XMLReader dictionaryForXMLData:data error:error];
 }
@@ -110,47 +110,47 @@ NSString *const kXMLReaderTextNodeKey = @"text";
 #pragma mark Parsing
 
 - (id)initWithError:(NSError **)error {
-	
+
     if (self = [super init]) {
-	
+
         errorPointer = error;
     }
     return self;
 }
 
 - (void)dealloc {
-	
+
     [dictionaryStack release];
     [textInProgress release];
     [super dealloc];
 }
 
 - (NSDictionary *)objectWithData:(NSData *)data {
-	
+
     // Clear out any old data
     [dictionaryStack release];
     [textInProgress release];
-    
+
     dictionaryStack = [[NSMutableArray alloc] init];
     textInProgress = [[NSMutableString alloc] init];
-    
+
     // Initialize the stack with a fresh dictionary
     [dictionaryStack addObject:[NSMutableDictionary dictionary]];
-    
+
     // Parse the XML
     NSXMLParser *parser = [[NSXMLParser alloc] initWithData:data];
     parser.delegate = self;
     BOOL success = [parser parse];
-    
+
     // Return the stack's root dictionary on success
     if (success){
-	
-        NSDictionary *resultDict = [dictionaryStack objectAtIndex:0]; 
+
+        NSDictionary *resultDict = [dictionaryStack objectAtIndex:0];
 
 		[parser release];
         return resultDict;
     }
-               
+
 	[parser release];
     return nil;
 }
@@ -159,14 +159,14 @@ NSString *const kXMLReaderTextNodeKey = @"text";
 #pragma mark NSXMLParserDelegate methods
 
 - (void)parser:(NSXMLParser *)parser didStartElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName attributes:(NSDictionary *)attributeDict {
-	
+
     // Get the dictionary for the current level in the stack
     NSMutableDictionary *parentDict = [dictionaryStack lastObject];
 
     // Create the child dictionary for the new element, and initilaize it with the attributes
     NSMutableDictionary *childDict = [NSMutableDictionary dictionary];
     [childDict addEntriesFromDictionary:attributeDict];
-    
+
     // If there's already an item for this key, it means we need to create an array
     id existingValue = [parentDict objectForKey:elementName];
     if (existingValue) {
@@ -185,35 +185,35 @@ NSString *const kXMLReaderTextNodeKey = @"text";
             // Replace the child dictionary with an array of children dictionaries
             [parentDict setObject:array forKey:elementName];
         }
-        
+
         // Add the new child dictionary to the array
         [array addObject:childDict];
     }
     else {
-	
+
         // No existing value, so update the dictionary
         [parentDict setObject:childDict forKey:elementName];
     }
-    
+
     // Update the stack
     [dictionaryStack addObject:childDict];
 }
 
 - (void)parser:(NSXMLParser *)parser didEndElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName {
-	
+
     // Update the parent dict with text info
     NSMutableDictionary *dictInProgress = [dictionaryStack lastObject];
-    
+
     // Set the text property
     if ([textInProgress length] > 0) {
-	
+
         [dictInProgress setObject:[textInProgress stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] forKey:kXMLReaderTextNodeKey];
 
         // Reset the text
         [textInProgress release];
         textInProgress = [[NSMutableString alloc] init];
     }
-    
+
     // Pop the current dict
     [dictionaryStack removeLastObject];
 }
