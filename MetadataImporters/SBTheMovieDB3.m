@@ -9,7 +9,7 @@
 #import <MP42Foundation/MP42Ratings.h>
 #import <MP42Foundation/MP42Languages.h>
 
-#import "SBMetadataSearchController.h"
+//#import "SBMetadataSearchController.h"
 
 #import "SBTheMovieDB3.h"
 #import "SBiTunesStore.h"
