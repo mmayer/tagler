@@ -7,6 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		282219131C7BBD860031C9CE /* SBMetadataImporter.m in Sources */ = {isa = PBXBuildFile; fileRef = 282219121C7BBD860031C9CE /* SBMetadataImporter.m */; };
+		282219151C7BBDFD0031C9CE /* SBiTunesStore.m in Sources */ = {isa = PBXBuildFile; fileRef = 282219141C7BBDFD0031C9CE /* SBiTunesStore.m */; };
+		282219171C7BBE270031C9CE /* SBTheTVDB.m in Sources */ = {isa = PBXBuildFile; fileRef = 282219161C7BBE270031C9CE /* SBTheTVDB.m */; };
+		282219191C7BBE390031C9CE /* SBTheMovieDB3.m in Sources */ = {isa = PBXBuildFile; fileRef = 282219181C7BBE390031C9CE /* SBTheMovieDB3.m */; };
+		2822191B1C7BBED80031C9CE /* SBMetadataHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 2822191A1C7BBED80031C9CE /* SBMetadataHelper.m */; };
+		2822191D1C7BBF160031C9CE /* SBMetadataResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 2822191C1C7BBF160031C9CE /* SBMetadataResult.m */; };
+		2822191F1C7BBF500031C9CE /* XMLReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 2822191E1C7BBF500031C9CE /* XMLReader.m */; };
 		28249A151C74F07500B0C1E5 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 28249A141C74F07500B0C1E5 /* main.m */; };
 		28249A301C74F7DD00B0C1E5 /* MP42Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28249A241C74F2FB00B0C1E5 /* MP42Foundation.framework */; };
 /* End PBXBuildFile section */
@@ -49,6 +56,13 @@
 
 /* Begin PBXFileReference section */
 		282219071C7BB0800031C9CE /* MetadataImporters */ = {isa = PBXFileReference; lastKnownFileType = folder; name = MetadataImporters; path = ../MetadataImporters; sourceTree = "<group>"; };
+		282219121C7BBD860031C9CE /* SBMetadataImporter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = SBMetadataImporter.m; path = MetadataImporters/SBMetadataImporter.m; sourceTree = "<group>"; };
+		282219141C7BBDFD0031C9CE /* SBiTunesStore.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = SBiTunesStore.m; path = MetadataImporters/SBiTunesStore.m; sourceTree = "<group>"; };
+		282219161C7BBE270031C9CE /* SBTheTVDB.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = SBTheTVDB.m; path = MetadataImporters/SBTheTVDB.m; sourceTree = "<group>"; };
+		282219181C7BBE390031C9CE /* SBTheMovieDB3.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = SBTheMovieDB3.m; path = MetadataImporters/SBTheMovieDB3.m; sourceTree = "<group>"; };
+		2822191A1C7BBED80031C9CE /* SBMetadataHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = SBMetadataHelper.m; path = MetadataImporters/SBMetadataHelper.m; sourceTree = "<group>"; };
+		2822191C1C7BBF160031C9CE /* SBMetadataResult.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = SBMetadataResult.m; path = MetadataImporters/SBMetadataResult.m; sourceTree = "<group>"; };
+		2822191E1C7BBF500031C9CE /* XMLReader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = XMLReader.m; path = MetadataImporters/XMLReader.m; sourceTree = "<group>"; };
 		28249A111C74F07400B0C1E5 /* tagler */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = tagler; sourceTree = BUILT_PRODUCTS_DIR; };
 		28249A141C74F07500B0C1E5 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		28249A1C1C74F2FB00B0C1E5 /* MP42Foundation.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = MP42Foundation.xcodeproj; path = MP42Foundation/MP42Foundation.xcodeproj; sourceTree = "<group>"; };
@@ -69,6 +83,13 @@
 		28249A081C74F07400B0C1E5 = {
 			isa = PBXGroup;
 			children = (
+				2822191E1C7BBF500031C9CE /* XMLReader.m */,
+				2822191C1C7BBF160031C9CE /* SBMetadataResult.m */,
+				2822191A1C7BBED80031C9CE /* SBMetadataHelper.m */,
+				282219181C7BBE390031C9CE /* SBTheMovieDB3.m */,
+				282219161C7BBE270031C9CE /* SBTheTVDB.m */,
+				282219141C7BBDFD0031C9CE /* SBiTunesStore.m */,
+				282219121C7BBD860031C9CE /* SBMetadataImporter.m */,
 				28249A1C1C74F2FB00B0C1E5 /* MP42Foundation.xcodeproj */,
 				28249A131C74F07400B0C1E5 /* tagler */,
 				28249A121C74F07400B0C1E5 /* Products */,
@@ -188,6 +209,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2822191F1C7BBF500031C9CE /* XMLReader.m in Sources */,
+				2822191D1C7BBF160031C9CE /* SBMetadataResult.m in Sources */,
+				2822191B1C7BBED80031C9CE /* SBMetadataHelper.m in Sources */,
+				282219191C7BBE390031C9CE /* SBTheMovieDB3.m in Sources */,
+				282219171C7BBE270031C9CE /* SBTheTVDB.m in Sources */,
+				282219151C7BBDFD0031C9CE /* SBiTunesStore.m in Sources */,
+				282219131C7BBD860031C9CE /* SBMetadataImporter.m in Sources */,
 				28249A151C74F07500B0C1E5 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -280,6 +308,7 @@
 			buildSettings = {
 				"ADDITIONAL_SDKS[arch=i386]" = "";
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				HEADER_SEARCH_PATHS = .;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -288,6 +317,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				HEADER_SEARCH_PATHS = .;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
