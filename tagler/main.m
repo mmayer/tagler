@@ -91,6 +91,14 @@ int process_file(const char * const fname, const char *new_genre,
         }
     }
 
+    printf("Processing %s S%02dE%02d (ID %s), \"%s\" (aired %s)...\n",
+        [m.tags[@"TV Show"] UTF8String],
+        [m.tags[@"TV Season"] intValue],
+        [m.tags[@"TV Episode #"] intValue],
+        [m.tags[@"TV Episode ID"] UTF8String],
+        [m.tags[@"Name"] UTF8String],
+        [m.tags[@"Release Date"] UTF8String]);
+
     if (image_index >= m.artworkFullsizeURLs.count) {
         image_index = m.artworkFullsizeURLs.count - 1;
     }
