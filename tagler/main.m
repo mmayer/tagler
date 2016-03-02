@@ -64,10 +64,12 @@ int process_file(const char * const fname, const char *new_genre,
         seasonNum: seasonNum
         episodeNum: episodeNum];
     if (!result || [result count] < 1) {
+        fprintf(stderr, "%s: no search results for %s\n", prg, fname);
         return -1;
     }
     m = [searcher loadTVMetadata:[result objectAtIndex:0] language:@"English"];
     if (!m) {
+        fprintf(stderr, "%s: couldn't load metadata for %s\n", prg, fname);
         return -1;
     }
 
