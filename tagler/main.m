@@ -20,14 +20,13 @@
 
 #define ALMOST_4GiB 4000000000
 
-SBMetadataImporter *searcher = nil;
-
 const char *prg;
 
 int process_file(const char * const fname, const char *new_genre,
     int total_tracks, int image_index)
 {
     SBMetadataResult *m;
+    SBMetadataImporter *searcher;
     NSError *error = nil;
     NSString *seriesName = nil;
     NSString *seasonNum = nil;
