@@ -6,8 +6,6 @@
 //  Copyright © 2016 Markus Mayer. All rights reserved.
 //
 
-//#import <Foundation/Foundation.h>
-
 @import AppKit;
 #import <MP42Foundation/MP42File.h>
 #import <MP42Foundation/MP42Image.h>
@@ -107,7 +105,7 @@ int process_file(const char * const fname, const char *new_genre,
         currentDirectoryPath]];
     NSString *fileNameAsURL = [[NSString stringWithFormat:@"file://%@%s",
         (fname[0] == '/') ? @"" : currentPath, fname]
-        stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];;
+        stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     NSURL *fileURL = [NSURL URLWithString:fileNameAsURL];
     MP42File *mp4File = [[MP42File alloc] initWithURL:fileURL];
     NSMutableDictionary<NSString *, id> *fileAttributes = [NSMutableDictionary dictionary];
