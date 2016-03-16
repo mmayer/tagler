@@ -38,6 +38,22 @@
 + (NSDictionary *)getStoreFor:(NSString *)aLanguageString
 {
 	NSString *iTunesStoresJSON = [[NSBundle mainBundle] pathForResource:@"iTunesStores" ofType:@"json"];
+    if (!iTunesStoresJSON) {
+        NSString *jsonFileName = @"iTunesStores.json";
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        NSString *home = [[[NSProcessInfo processInfo] environment] objectForKey:@"HOME"];
+        iTunesStoresJSON = [NSString stringWithFormat:@"%@/Library/Application Support/tagler/%@", home, jsonFileName];
+        if (![fileManager fileExistsAtPath:iTunesStoresJSON]) {
+            NSString *jsonDirectory = [defaults valueForKey:@"SBMetadataPreference|iTunesJSON"];
+            iTunesStoresJSON = [NSString stringWithFormat:@"%@/%@", jsonDirectory, jsonFileName];
+        }
+        if (![fileManager fileExistsAtPath:iTunesStoresJSON]) {
+            fprintf(stderr, "couldn't find iTunes JSON file %s\n", [jsonFileName UTF8String]);
+            return nil;
+        }
+    }
+
     NSData *data = [NSData dataWithContentsOfFile:iTunesStoresJSON];
 
     if (data) {
