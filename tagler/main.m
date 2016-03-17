@@ -23,7 +23,7 @@
 const char *prg;
 
 int process_file(const char * const fname, const char *new_genre,
-    int total_tracks, int image_index)
+    int total_tracks, int image_index, const char *language)
 {
     SBMetadataResult *m, *firstHit;
     SBMetadataImporter *searcher;
@@ -32,6 +32,7 @@ int process_file(const char * const fname, const char *new_genre,
     NSString *title = nil;
     NSString *seasonNum = nil;
     NSString *episodeNum = nil;
+    NSString *lang = nil;
     NSString *fileName = [[NSString alloc] initWithCString:fname
         encoding:NSUTF8StringEncoding];
     NSDictionary *parsed = [SBMetadataHelper parseFilename:fileName];
@@ -55,6 +56,13 @@ int process_file(const char * const fname, const char *new_genre,
         return -1;
     }
 
+    if (language) {
+        lang = [[NSString alloc] initWithCString:language
+            encoding:NSUTF8StringEncoding];
+    } else {
+        lang = (isMovie) ? @"USA (English)" : @"English";
+    }
+
     for (NSString *key in parsed) {
         NSString *value = [parsed objectForKey: key];
         if ([key isEqualToString:@"seriesName"] ||
@@ -68,10 +76,10 @@ int process_file(const char * const fname, const char *new_genre,
     }
 
     if (isMovie) {
-        result = [searcher searchMovie:title language:@"USA (English)"];
+        result = [searcher searchMovie:title language:lang];
     } else {
         result = [searcher searchTVSeries:title
-            language:@"English"
+            language:lang
             seasonNum:seasonNum
             episodeNum:episodeNum];
     }
@@ -81,9 +89,9 @@ int process_file(const char * const fname, const char *new_genre,
     }
     firstHit = [result objectAtIndex:0];
     if (isMovie) {
-        m = [searcher loadMovieMetadata:firstHit language:@"USA (English)"];
+        m = [searcher loadMovieMetadata:firstHit language:lang];
     } else {
-        m = [searcher loadTVMetadata:firstHit language:@"English"];
+        m = [searcher loadTVMetadata:firstHit language:lang];
     }
     if (!m) {
         fprintf(stderr, "%s: couldn't load metadata for %s\n", prg, fname);
@@ -189,10 +197,14 @@ int tagler_main(int argc, char * const argv[])
     int ret = 0;
     int image_number = -1;
     char *genre = NULL;
+    char *language = NULL;
 
     prg = basename(argv[0]);
-    while ((ch = getopt(argc, argv, "T:hg:i:")) != -1) {
+    while ((ch = getopt(argc, argv, "L:T:hg:i:")) != -1) {
         switch (ch) {
+            case 'L':
+                language = optarg;
+                break;
             case 'T':
                 tracks = strtol(optarg, &errp, 10);
                 if (errp[0] != '\0') {
@@ -202,8 +214,8 @@ int tagler_main(int argc, char * const argv[])
                 }
                 break;
             case 'h':
-                fprintf(stderr, "usage: %s [-T<tracks>] [-g<genre>] "
-                    "[-i<image>] <file> (<file> ...)\n", prg);
+                fprintf(stderr, "usage: %s [-L<language>] [-T<tracks>] "
+                    "[-g<genre>] [-i<image>] <file(s)>\n", prg);
                 return 0;
             case 'g':
                 genre = optarg;
@@ -226,7 +238,7 @@ int tagler_main(int argc, char * const argv[])
     }
 
     for (i = optind; i < argc; i++) {
-        ret = process_file(argv[i], genre, tracks, image_number);
+        ret = process_file(argv[i], genre, tracks, image_number, language);
         if (ret < 0) {
             break;
         }
