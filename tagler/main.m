@@ -25,30 +25,41 @@ const char *prg;
 int process_file(const char * const fname, const char *new_genre,
     int total_tracks, int image_index)
 {
-    SBMetadataResult *m;
+    SBMetadataResult *m, *firstHit;
     SBMetadataImporter *searcher;
+    NSArray<SBMetadataResult *> *result;
     NSError *error = nil;
-    NSString *seriesName = nil;
+    NSString *title = nil;
     NSString *seasonNum = nil;
     NSString *episodeNum = nil;
     NSString *fileName = [[NSString alloc] initWithCString:fname
         encoding:NSUTF8StringEncoding];
     NSDictionary *parsed = [SBMetadataHelper parseFilename:fileName];
+    NSString *mediaType = parsed[@"type"];
+    BOOL isMovie = NO;
 
-    if ([parsed[@"type"] isEqualToString:@"movie"]) {
-        fprintf(stderr, "%s: movies are currently unsupported\n", prg);
+    printf("Media type: %s\n", [mediaType UTF8String]);
+    if ([mediaType isEqualToString:@"movie"]) {
+        searcher = [SBMetadataImporter importerForProvider:@"iTunes Store"];
+        isMovie = YES;
+    } else if ([mediaType isEqualToString:@"tv"]) {
+        searcher = [SBMetadataImporter importerForProvider:@"TheTVDB"];
+    } else {
+        fprintf(stderr, "%s: unsupported media type \"%s\"\n", prg,
+            [mediaType UTF8String]);
         return -1;
     }
 
-    searcher = [SBMetadataImporter importerForProvider: @"TheTVDB"];
     if (!searcher) {
+        fprintf(stderr, "%s: couldn't create searcher\n", prg);
         return -1;
     }
 
     for (NSString *key in parsed) {
         NSString *value = [parsed objectForKey: key];
-        if ([key isEqualToString:@"seriesName"]) {
-            seriesName = value;
+        if ([key isEqualToString:@"seriesName"] ||
+            [key isEqualToString:@"title"]) {
+            title = value;
         } else if ([key isEqualToString:@"seasonNum"]) {
             seasonNum = value;
         } else if ([key isEqualToString:@"episodeNum"]) {
@@ -56,21 +67,30 @@ int process_file(const char * const fname, const char *new_genre,
         }
     }
 
-    NSArray<SBMetadataResult *> *result = [searcher searchTVSeries:seriesName
-        language: @"English"
-        seasonNum: seasonNum
-        episodeNum: episodeNum];
+    if (isMovie) {
+        result = [searcher searchMovie:title language:@"USA (English)"];
+    } else {
+        result = [searcher searchTVSeries:title
+            language:@"English"
+            seasonNum:seasonNum
+            episodeNum:episodeNum];
+    }
     if (!result || [result count] < 1) {
         fprintf(stderr, "%s: no search results for %s\n", prg, fname);
         return -1;
     }
-    m = [searcher loadTVMetadata:[result objectAtIndex:0] language:@"English"];
+    firstHit = [result objectAtIndex:0];
+    if (isMovie) {
+        m = [searcher loadMovieMetadata:firstHit language:@"USA (English)"];
+    } else {
+        m = [searcher loadTVMetadata:firstHit language:@"English"];
+    }
     if (!m) {
         fprintf(stderr, "%s: couldn't load metadata for %s\n", prg, fname);
         return -1;
     }
 
-    if (total_tracks > 0) {
+    if (!isMovie && total_tracks > 0) {
         NSString *track = [m.tags objectForKey:@"Track #"];
         if (track) {
             NSString *trackWithTotal = [NSString stringWithFormat:@"%@/%d",
@@ -88,14 +108,19 @@ int process_file(const char * const fname, const char *new_genre,
         }
     }
 
-    printf("Processing %s S%02dE%02d (ID %s), \"%s\" (aired %s)...\n",
-        [m.tags[@"TV Show"] UTF8String],
-        [m.tags[@"TV Season"] intValue],
-        [m.tags[@"TV Episode #"] intValue],
-        [m.tags[@"TV Episode ID"] UTF8String],
-        [m.tags[@"Name"] UTF8String],
-        [m.tags[@"Release Date"] UTF8String]);
-
+    if (isMovie) {
+        printf("Processing \"%s\" (released %s)...\n",
+            [m.tags[@"Name"] UTF8String],
+            [m.tags[@"Release Date"] UTF8String]);
+    } else {
+        printf("Processing %s S%02dE%02d (ID %s), \"%s\" (aired %s)...\n",
+            [m.tags[@"TV Show"] UTF8String],
+            [m.tags[@"TV Season"] intValue],
+            [m.tags[@"TV Episode #"] intValue],
+            [m.tags[@"TV Episode ID"] UTF8String],
+            [m.tags[@"Name"] UTF8String],
+            [m.tags[@"Release Date"] UTF8String]);
+    }
     if (image_index >= m.artworkFullsizeURLs.count) {
         image_index = m.artworkFullsizeURLs.count - 1;
     }
