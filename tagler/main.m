@@ -33,8 +33,9 @@ int process_file(const char * const fname, const char *new_genre,
     NSString *seasonNum = nil;
     NSString *episodeNum = nil;
     NSString *lang = nil;
-    NSString *fileName = [[NSString alloc] initWithCString:fname
-        encoding:NSUTF8StringEncoding];
+    // We want to parse just the file name without the entire path.
+    NSString *fileName = [[[NSString alloc] initWithCString:fname
+        encoding:NSUTF8StringEncoding] lastPathComponent];
     NSDictionary *parsed = [SBMetadataHelper parseFilename:fileName];
     NSString *mediaType = parsed[@"type"];
     BOOL isMovie = NO;
