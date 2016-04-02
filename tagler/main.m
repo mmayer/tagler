@@ -34,12 +34,21 @@ int process_file(const char * const fname, const char *new_genre,
     NSString *seasonNum = nil;
     NSString *episodeNum = nil;
     NSString *lang = nil;
-    // We want to parse just the file name without the entire path.
-    NSString *fileName = [[[NSString alloc] initWithCString:fname
-        encoding:NSUTF8StringEncoding] lastPathComponent];
-    NSDictionary *parsed = [SBMetadataHelper parseFilename:fileName];
-    NSString *mediaType = parsed[@"type"];
+    NSString *mediaType = nil;
+    NSDictionary *parsed = nil;
     BOOL isMovie = NO;
+
+    // Skip parsing if title, season and episode are given on the command line.
+    if (!track_title || season < 0 || episode < 0) {
+        // We want to parse just the file name without the entire path.
+        NSString *fileName = [[[NSString alloc] initWithCString:fname
+            encoding:NSUTF8StringEncoding] lastPathComponent];
+        parsed = [SBMetadataHelper parseFilename:fileName];
+        mediaType = parsed[@"type"];
+    } else {
+        // Since we have a season and an episode, it must be a TV show.
+        mediaType = @"tv";
+    }
 
     printf("Media type: %s\n", [mediaType UTF8String]);
     if ([mediaType isEqualToString:@"movie"]) {
