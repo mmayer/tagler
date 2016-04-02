@@ -17,6 +17,9 @@
 
 #import <libgen.h>
 #import <unistd.h>
+#import <utime.h>
+
+#import <sys/stat.h>
 
 #define ALMOST_4GiB 4000000000
 
@@ -24,7 +27,7 @@ const char *prg;
 
 int process_file(const char * const fname, const char *new_genre,
     int total_tracks, int image_index, const char *language,
-    const char *track_title, int season, int episode)
+    const char *track_title, int season, int episode, BOOL preserve)
 {
     SBMetadataResult *m, *firstHit;
     SBMetadataImporter *searcher;
@@ -202,7 +205,28 @@ int process_file(const char * const fname, const char *new_genre,
         [fileAttributes setObject:@YES forKey:MP4264BitData];
     }
 
+    struct stat st;
+    if (preserve) {
+        if (stat(fname, &st) < 0) {
+            fprintf(stderr, "%s: couldn't stat %s -- %s\n", prg, fname,
+                strerror(errno));
+            // We don't wan't to restore the timestamp if we couldn't read it.
+            preserve = FALSE;
+        }
+    }
+
     [mp4File updateMP4FileWithOptions:fileAttributes error:&error];
+    if (preserve) {
+        struct utimbuf ut;
+
+        ut.actime = st.st_atime;
+        ut.modtime = st.st_mtime;
+        if (utime(fname, &ut) < 0) {
+            fprintf(stderr, "%s: couldn't restore timestamps -- %s\n", prg,
+                strerror(errno));
+            return -1;
+        }
+    }
     if (error) {
         return -1;
     }
@@ -219,15 +243,19 @@ int tagler_main(int argc, char * const argv[])
     int season = -1;
     int episode = -1;
     int image_number = -1;
+    BOOL preserve = FALSE;
     char *genre = NULL;
     char *language = NULL;
     char *title = NULL;
 
     prg = basename(argv[0]);
-    while ((ch = getopt(argc, argv, "L:T:e:hg:i:t:s:")) != -1) {
+    while ((ch = getopt(argc, argv, "L:PT:e:hg:i:t:s:")) != -1) {
         switch (ch) {
             case 'L':
                 language = optarg;
+                break;
+            case 'P':
+                preserve = TRUE;
                 break;
             case 'T':
                 tracks = strtol(optarg, &errp, 10);
@@ -248,6 +276,7 @@ int tagler_main(int argc, char * const argv[])
             case 'h':
                 fprintf(stderr, "usage: %s [<option(s)>] <file(s)>\n", prg);
                 fprintf(stderr, "       -L<language>\n"
+                    "       -P (preserve timestamp)\n"
                     "       -T<total-tracks-per-seasion#>\n"
                     "       -g<genre>\n"
                     "       -i<image#>\n"
@@ -288,7 +317,7 @@ int tagler_main(int argc, char * const argv[])
 
     for (i = optind; i < argc; i++) {
         ret = process_file(argv[i], genre, tracks, image_number, language,
-            title, season, episode);
+            title, season, episode, preserve);
         if (ret < 0) {
             break;
         }
