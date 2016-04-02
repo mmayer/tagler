@@ -23,7 +23,8 @@
 const char *prg;
 
 int process_file(const char * const fname, const char *new_genre,
-    int total_tracks, int image_index, const char *language)
+    int total_tracks, int image_index, const char *language,
+    const char *track_title, int season, int episode)
 {
     SBMetadataResult *m, *firstHit;
     SBMetadataImporter *searcher;
@@ -75,10 +76,20 @@ int process_file(const char * const fname, const char *new_genre,
             episodeNum = value;
         }
     }
+    if (track_title) {
+        title = [[NSString alloc] initWithCString:track_title
+            encoding:NSUTF8StringEncoding];
+    }
 
     if (isMovie) {
         result = [searcher searchMovie:title language:lang];
     } else {
+        if (season >= 0) {
+            seasonNum = [NSString stringWithFormat:@"%d", season];
+        }
+        if (episode >= 0) {
+            episodeNum = [NSString stringWithFormat:@"%d", episode];
+        }
         result = [searcher searchTVSeries:title
             language:lang
             seasonNum:seasonNum
@@ -196,12 +207,15 @@ int tagler_main(int argc, char * const argv[])
     char *errp;
     int tracks = 0;
     int ret = 0;
+    int season = -1;
+    int episode = -1;
     int image_number = -1;
     char *genre = NULL;
     char *language = NULL;
+    char *title = NULL;
 
     prg = basename(argv[0]);
-    while ((ch = getopt(argc, argv, "L:T:hg:i:")) != -1) {
+    while ((ch = getopt(argc, argv, "L:T:e:hg:i:t:s:")) != -1) {
         switch (ch) {
             case 'L':
                 language = optarg;
@@ -214,15 +228,40 @@ int tagler_main(int argc, char * const argv[])
                     return 1;
                 }
                 break;
+            case 'e':
+                episode = strtol(optarg, &errp, 10);
+                if (errp[0] != '\0') {
+                    fprintf(stderr, "%s: invalid image number -- %s\n", prg,
+                        optarg);
+                    return 1;
+                }
+                break;
             case 'h':
-                fprintf(stderr, "usage: %s [-L<language>] [-T<tracks>] "
-                    "[-g<genre>] [-i<image>] <file(s)>\n", prg);
+                fprintf(stderr, "usage: %s [<option(s)>] <file(s)>\n", prg);
+                fprintf(stderr, "       -L<language>\n"
+                    "       -T<total-tracks-per-seasion#>\n"
+                    "       -g<genre>\n"
+                    "       -i<image#>\n"
+                    "       -t<title>\n"
+                    "       -s<season#>\n"
+                    "       -e<episode#>\n");
                 return 0;
             case 'g':
                 genre = optarg;
                 break;
             case 'i':
                 image_number = strtol(optarg, &errp, 10);
+                if (errp[0] != '\0') {
+                    fprintf(stderr, "%s: invalid image number -- %s\n", prg,
+                        optarg);
+                    return 1;
+                }
+                break;
+            case 't':
+                title = optarg;
+                break;
+            case 's':
+                season = strtol(optarg, &errp, 10);
                 if (errp[0] != '\0') {
                     fprintf(stderr, "%s: invalid image number -- %s\n", prg,
                         optarg);
@@ -239,7 +278,8 @@ int tagler_main(int argc, char * const argv[])
     }
 
     for (i = optind; i < argc; i++) {
-        ret = process_file(argv[i], genre, tracks, image_number, language);
+        ret = process_file(argv[i], genre, tracks, image_number, language,
+            title, season, episode);
         if (ret < 0) {
             break;
         }
