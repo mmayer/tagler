@@ -25,9 +25,23 @@
 
 const char *prg;
 
+int verb_printf(BOOL verbose, const char *fmt, ...)
+{
+    va_list args;
+    int ret = 0;
+
+    if (verbose) {
+        va_start(args, fmt);
+        ret = vprintf(fmt, args);
+        va_end(args);
+    }
+    return ret;
+}
+
 int process_file(const char * const fname, const char *new_genre,
     int total_tracks, int image_index, const char *language,
-    const char *track_title, int season, int episode, BOOL preserve)
+    const char *track_title, int season, int episode, BOOL preserve,
+    BOOL verbose)
 {
     SBMetadataResult *m, *firstHit;
     SBMetadataImporter *searcher;
@@ -52,8 +66,8 @@ int process_file(const char * const fname, const char *new_genre,
         // Since we have a season and an episode, it must be a TV show.
         mediaType = @"tv";
     }
+    verb_printf(verbose, "Media type: %s\n", [mediaType UTF8String]);
 
-    printf("Media type: %s\n", [mediaType UTF8String]);
     if ([mediaType isEqualToString:@"movie"]) {
         searcher = [SBMetadataImporter importerForProvider:@"iTunes Store"];
         isMovie = YES;
@@ -76,6 +90,7 @@ int process_file(const char * const fname, const char *new_genre,
     } else {
         lang = (isMovie) ? @"USA (English)" : @"English";
     }
+    verb_printf(verbose, "Language: %s\n", [lang UTF8String]);
 
     for (NSString *key in parsed) {
         NSString *value = [parsed objectForKey: key];
@@ -92,6 +107,7 @@ int process_file(const char * const fname, const char *new_genre,
         title = [[NSString alloc] initWithCString:track_title
             encoding:NSUTF8StringEncoding];
     }
+    verb_printf(verbose, "Title: %s\n", [title UTF8String]);
 
     if (isMovie) {
         result = [searcher searchMovie:title language:lang];
@@ -102,6 +118,9 @@ int process_file(const char * const fname, const char *new_genre,
         if (episode >= 0) {
             episodeNum = [NSString stringWithFormat:@"%d", episode];
         }
+        verb_printf(verbose, "Season: %s\n"
+            "Episode: %s\n",
+            [seasonNum UTF8String], [episodeNum UTF8String]);
         result = [searcher searchTVSeries:title
             language:lang
             seasonNum:seasonNum
@@ -244,12 +263,13 @@ int tagler_main(int argc, char * const argv[])
     int episode = -1;
     int image_number = -1;
     BOOL preserve = FALSE;
+    BOOL verbose = FALSE;
     char *genre = NULL;
     char *language = NULL;
     char *title = NULL;
 
     prg = basename(argv[0]);
-    while ((ch = getopt(argc, argv, "L:PT:e:hg:i:t:s:")) != -1) {
+    while ((ch = getopt(argc, argv, "L:PT:e:hg:i:t:s:v")) != -1) {
         switch (ch) {
             case 'L':
                 language = optarg;
@@ -282,6 +302,7 @@ int tagler_main(int argc, char * const argv[])
                     "       -i<image#>\n"
                     "       -t<title>\n"
                     "       -s<season#>\n"
+                    "       -v (verbose)\n"
                     "       -e<episode#>\n");
                 return 0;
             case 'g':
@@ -306,6 +327,9 @@ int tagler_main(int argc, char * const argv[])
                     return 1;
                 }
                 break;
+            case 'v':
+                verbose = TRUE;
+                break;
             default:
                 return 1;
         }
@@ -317,7 +341,7 @@ int tagler_main(int argc, char * const argv[])
 
     for (i = optind; i < argc; i++) {
         ret = process_file(argv[i], genre, tracks, image_number, language,
-            title, season, episode, preserve);
+            title, season, episode, preserve, verbose);
         if (ret < 0) {
             break;
         }
