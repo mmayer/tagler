@@ -39,7 +39,7 @@ int verb_printf(int level, int verbose, const char *fmt, ...)
 }
 
 int process_file(const char * const fname, const char *new_genre,
-    int total_tracks, int image_index, const char *language,
+    int total_tracks, int image_index, const char *image, const char *language,
     const char *track_title, int season, int episode, BOOL preserve,
     int verbose)
 {
@@ -185,17 +185,24 @@ int process_file(const char * const fname, const char *new_genre,
             [m.tags[@"Release Date"] UTF8String]);
     }
 
+    NSData *artworkData;
     NSFileManager *filemgr = [[NSFileManager alloc] init];
     NSString *currentPath = [NSString stringWithFormat:@"%@/", [filemgr
         currentDirectoryPath]];
-    NSString *fileNameAsURL = [[NSString stringWithFormat:@"file://%@%s",
-        (fname[0] == '/') ? @"" : currentPath, fname]
-        stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-    NSURL *fileURL = [NSURL URLWithString:fileNameAsURL];
-    MP42File *mp4File = [[MP42File alloc] initWithURL:fileURL];
-    NSMutableDictionary<NSString *, id> *fileAttributes = [NSMutableDictionary dictionary];
-    NSURL *artworkURL = m.artworkFullsizeURLs[image_index];
-    NSData *artworkData = [SBMetadataHelper downloadDataFromURL:artworkURL withCachePolicy:SBDefaultPolicy];
+
+    if (image) {
+        NSString *imageAsURL = [[NSString stringWithFormat:@"file://%@%s",
+            (image[0] == '/') ? @"" : currentPath, image]
+            stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+        NSURL *imageURL = [NSURL URLWithString:imageAsURL];
+        artworkData = [SBMetadataHelper downloadDataFromURL:imageURL
+            withCachePolicy:SBDefaultPolicy];
+
+    } else {
+        NSURL *artworkURL = m.artworkFullsizeURLs[image_index];
+        artworkData = [SBMetadataHelper downloadDataFromURL:artworkURL
+            withCachePolicy:SBDefaultPolicy];
+    }
     if (artworkData && artworkData.length) {
         MP42Image *artwork = [[MP42Image alloc] initWithData:artworkData type:MP42_ART_JPEG];
         if (artwork) {
@@ -203,6 +210,12 @@ int process_file(const char * const fname, const char *new_genre,
         }
     }
 
+    NSMutableDictionary<NSString *, id> *fileAttributes = [NSMutableDictionary dictionary];
+    NSString *fileNameAsURL = [[NSString stringWithFormat:@"file://%@%s",
+        (fname[0] == '/') ? @"" : currentPath, fname]
+        stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    NSURL *fileURL = [NSURL URLWithString:fileNameAsURL];
+    MP42File *mp4File = [[MP42File alloc] initWithURL:fileURL];
     if (!mp4File) {
         fprintf(stderr, "%s: couldn't open %s\n", prg, fname);
         return -1;
@@ -277,10 +290,14 @@ int tagler_main(int argc, char * const argv[])
     char *genre = NULL;
     char *language = NULL;
     char *title = NULL;
+    char *image = NULL;
 
     prg = basename(argv[0]);
-    while ((ch = getopt(argc, argv, "L:PT:e:hg:i:t:s:v")) != -1) {
+    while ((ch = getopt(argc, argv, "I:L:PT:e:hg:i:t:s:v")) != -1) {
         switch (ch) {
+            case 'I':
+                image = optarg;
+                break;
             case 'L':
                 language = optarg;
                 break;
@@ -305,7 +322,9 @@ int tagler_main(int argc, char * const argv[])
                 break;
             case 'h':
                 fprintf(stderr, "usage: %s [<option(s)>] <file(s)>\n", prg);
-                fprintf(stderr, "       -L<language>\n"
+                fprintf(stderr,
+                    "       -I<image-file>\n"
+                    "       -L<language>\n"
                     "       -P (preserve timestamp)\n"
                     "       -T<total-tracks-per-seasion#>\n"
                     "       -g<genre>\n"
@@ -348,10 +367,14 @@ int tagler_main(int argc, char * const argv[])
         fprintf(stderr, "%s: no files specified\n", prg);
         return 1;
     }
+    if (image && image_number >= 0) {
+        fprintf(stderr, "%s: -i and -I cannot be specified together\n", prg);
+        return 1;
+    }
 
     for (i = optind; i < argc; i++) {
-        ret = process_file(argv[i], genre, tracks, image_number, language,
-            title, season, episode, preserve, verbose);
+        ret = process_file(argv[i], genre, tracks, image_number, image,
+            language, title, season, episode, preserve, verbose);
         if (ret < 0) {
             break;
         }
