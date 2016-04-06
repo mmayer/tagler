@@ -141,6 +141,10 @@ int process_file(const char * const fname, const char *new_genre,
         return -1;
     }
 
+    if (image_index >= m.artworkFullsizeURLs.count) {
+        image_index = m.artworkFullsizeURLs.count - 1;
+    }
+
     verb_printf(1, verbose, "Image #: %d\n", image_index);
     if (verbose > 1) {
         for (int i = 0; i < m.artworkFullsizeURLs.count; i++) {
@@ -180,9 +184,7 @@ int process_file(const char * const fname, const char *new_genre,
             [m.tags[@"Name"] UTF8String],
             [m.tags[@"Release Date"] UTF8String]);
     }
-    if (image_index >= m.artworkFullsizeURLs.count) {
-        image_index = m.artworkFullsizeURLs.count - 1;
-    }
+
     NSFileManager *filemgr = [[NSFileManager alloc] init];
     NSString *currentPath = [NSString stringWithFormat:@"%@/", [filemgr
         currentDirectoryPath]];
