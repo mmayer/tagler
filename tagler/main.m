@@ -141,6 +141,14 @@ int process_file(const char * const fname, const char *new_genre,
         return -1;
     }
 
+    verb_printf(1, verbose, "Image #: %d\n", image_index);
+    if (verbose > 1) {
+        for (int i = 0; i < m.artworkFullsizeURLs.count; i++) {
+            printf("Image URL #%3d: %s\n", i,
+                [[m.artworkFullsizeURLs[i] absoluteString] UTF8String]);
+        }
+    }
+
     if (!isMovie && total_tracks > 0) {
         NSString *track = [m.tags objectForKey:@"Track #"];
         if (track) {
