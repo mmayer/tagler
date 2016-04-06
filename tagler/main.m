@@ -25,12 +25,12 @@
 
 const char *prg;
 
-int verb_printf(BOOL verbose, const char *fmt, ...)
+int verb_printf(int level, int verbose, const char *fmt, ...)
 {
     va_list args;
     int ret = 0;
 
-    if (verbose) {
+    if (verbose >= level) {
         va_start(args, fmt);
         ret = vprintf(fmt, args);
         va_end(args);
@@ -41,7 +41,7 @@ int verb_printf(BOOL verbose, const char *fmt, ...)
 int process_file(const char * const fname, const char *new_genre,
     int total_tracks, int image_index, const char *language,
     const char *track_title, int season, int episode, BOOL preserve,
-    BOOL verbose)
+    int verbose)
 {
     SBMetadataResult *m, *firstHit;
     SBMetadataImporter *searcher;
@@ -66,7 +66,7 @@ int process_file(const char * const fname, const char *new_genre,
         // Since we have a season and an episode, it must be a TV show.
         mediaType = @"tv";
     }
-    verb_printf(verbose, "Media type: %s\n", [mediaType UTF8String]);
+    verb_printf(1, verbose, "Media type: %s\n", [mediaType UTF8String]);
 
     if ([mediaType isEqualToString:@"movie"]) {
         searcher = [SBMetadataImporter importerForProvider:@"iTunes Store"];
@@ -90,7 +90,7 @@ int process_file(const char * const fname, const char *new_genre,
     } else {
         lang = (isMovie) ? @"USA (English)" : @"English";
     }
-    verb_printf(verbose, "Language: %s\n", [lang UTF8String]);
+    verb_printf(1, verbose, "Language: %s\n", [lang UTF8String]);
 
     for (NSString *key in parsed) {
         NSString *value = [parsed objectForKey: key];
@@ -107,7 +107,7 @@ int process_file(const char * const fname, const char *new_genre,
         title = [[NSString alloc] initWithCString:track_title
             encoding:NSUTF8StringEncoding];
     }
-    verb_printf(verbose, "Title: %s\n", [title UTF8String]);
+    verb_printf(1, verbose, "Title: %s\n", [title UTF8String]);
 
     if (isMovie) {
         result = [searcher searchMovie:title language:lang];
@@ -118,7 +118,7 @@ int process_file(const char * const fname, const char *new_genre,
         if (episode >= 0) {
             episodeNum = [NSString stringWithFormat:@"%d", episode];
         }
-        verb_printf(verbose, "Season: %s\n"
+        verb_printf(1, verbose, "Season: %s\n"
             "Episode: %s\n",
             [seasonNum UTF8String], [episodeNum UTF8String]);
         result = [searcher searchTVSeries:title
@@ -262,8 +262,8 @@ int tagler_main(int argc, char * const argv[])
     int season = -1;
     int episode = -1;
     int image_number = -1;
+    int verbose = 0;
     BOOL preserve = FALSE;
-    BOOL verbose = FALSE;
     char *genre = NULL;
     char *language = NULL;
     char *title = NULL;
@@ -302,7 +302,7 @@ int tagler_main(int argc, char * const argv[])
                     "       -i<image#>\n"
                     "       -t<title>\n"
                     "       -s<season#>\n"
-                    "       -v (verbose)\n"
+                    "       -v[v...] (verbose; more v's for more verbosity)\n"
                     "       -e<episode#>\n");
                 return 0;
             case 'g':
@@ -328,7 +328,7 @@ int tagler_main(int argc, char * const argv[])
                 }
                 break;
             case 'v':
-                verbose = TRUE;
+                verbose++;
                 break;
             default:
                 return 1;
