@@ -315,7 +315,7 @@ int tagler_main(int argc, char * const argv[])
             case 'e':
                 episode = strtol(optarg, &errp, 10);
                 if (errp[0] != '\0') {
-                    fprintf(stderr, "%s: invalid image number -- %s\n", prg,
+                    fprintf(stderr, "%s: invalid episode number -- %s\n", prg,
                         optarg);
                     return 1;
                 }
@@ -351,7 +351,7 @@ int tagler_main(int argc, char * const argv[])
             case 's':
                 season = strtol(optarg, &errp, 10);
                 if (errp[0] != '\0') {
-                    fprintf(stderr, "%s: invalid image number -- %s\n", prg,
+                    fprintf(stderr, "%s: invalid season number -- %s\n", prg,
                         optarg);
                     return 1;
                 }
