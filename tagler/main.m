@@ -25,6 +25,26 @@
 
 const char *prg;
 
+const char *media_kind_list[] = {
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "Movie",
+    "TV Show",
+};
+
+const char *hd_kind_list[] = {
+    "Non-HD",
+    "720p",
+    "1080p",
+};
+
 int verb_printf(int level, int verbose, const char *fmt, ...)
 {
     va_list args;
@@ -36,6 +56,46 @@ int verb_printf(int level, int verbose, const char *fmt, ...)
         va_end(args);
     }
     return ret;
+}
+
+int read_file(const char * const fname)
+{
+    NSFileManager *filemgr = [[NSFileManager alloc] init];
+    NSString *currentPath = [NSString stringWithFormat:@"%@/", [filemgr
+        currentDirectoryPath]];
+    NSString *fileNameAsURL = [[NSString stringWithFormat:@"file://%@%s",
+        (fname[0] == '/') ? @"" : currentPath, fname]
+        stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    NSURL *fileURL = [NSURL URLWithString:fileNameAsURL];
+    MP42File *mp4File = [[MP42File alloc] initWithURL:fileURL];
+    MP42Metadata *metadata;
+
+    if (!mp4File) {
+        fprintf(stderr, "%s: couldn't open %s\n", prg, fname);
+        return -1;
+    }
+    metadata = [mp4File metadata];
+    printf("mediaKind: %s (%d)\n"
+           "hdVideo: %s (%d)\n",
+           media_kind_list[metadata.mediaKind],
+           metadata.mediaKind,
+           hd_kind_list[metadata.hdVideo],
+           metadata.hdVideo);
+    for (NSString *key in metadata.tagsDict) {
+        const char *value;
+        id val = [metadata.tagsDict objectForKey:key];
+
+        if ([val isKindOfClass:[NSString class]]) {
+            NSString *str = val;
+            value = [str UTF8String];
+        } else {
+            NSString *str = [val stringValue];
+            value = [str UTF8String];
+        }
+        printf("%s: %s\n", [key UTF8String], value);
+    }
+
+    return 0;
 }
 
 int process_file(const char * const fname, const char *new_genre,
@@ -287,13 +347,14 @@ int tagler_main(int argc, char * const argv[])
     int image_number = -1;
     int verbose = 0;
     BOOL preserve = FALSE;
+    BOOL read_mode = FALSE;
     char *genre = NULL;
     char *language = NULL;
     char *title = NULL;
     char *image = NULL;
 
     prg = basename(argv[0]);
-    while ((ch = getopt(argc, argv, "I:L:PT:e:hg:i:t:s:v")) != -1) {
+    while ((ch = getopt(argc, argv, "I:L:PT:e:hg:i:t:rs:v")) != -1) {
         switch (ch) {
             case 'I':
                 image = optarg;
@@ -330,6 +391,7 @@ int tagler_main(int argc, char * const argv[])
                     "       -g<genre>\n"
                     "       -i<image#>\n"
                     "       -t<title>\n"
+                    "       -r (read metadata from file)\n"
                     "       -s<season#>\n"
                     "       -v[v...] (verbose; more v's for more verbosity)\n"
                     "       -e<episode#>\n");
@@ -347,6 +409,9 @@ int tagler_main(int argc, char * const argv[])
                 break;
             case 't':
                 title = optarg;
+                break;
+            case 'r':
+                read_mode = TRUE;
                 break;
             case 's':
                 season = strtol(optarg, &errp, 10);
@@ -371,10 +436,18 @@ int tagler_main(int argc, char * const argv[])
         fprintf(stderr, "%s: -i and -I cannot be specified together\n", prg);
         return 1;
     }
+    if (read_mode && optind != 2) {
+        fprintf(stderr, "%s: -r can't be combined with another option\n", prg);
+        return 1;
+    }
 
     for (i = optind; i < argc; i++) {
-        ret = process_file(argv[i], genre, tracks, image_number, image,
-            language, title, season, episode, preserve, verbose);
+        if (read_mode) {
+            ret = read_file(argv[i]);
+        } else {
+            ret = process_file(argv[i], genre, tracks, image_number, image,
+                language, title, season, episode, preserve, verbose);
+        }
         if (ret < 0) {
             break;
         }
