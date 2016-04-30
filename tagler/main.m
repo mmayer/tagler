@@ -336,11 +336,8 @@ int process_file(const char * const fname, const char *new_genre,
             return -1;
         }
     }
-    if (error) {
-        return -1;
-    }
 
-    return 0;
+    return error ? -1 : 0;
 }
 
 int tagler_main(int argc, char * const argv[])
