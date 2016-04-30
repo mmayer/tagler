@@ -58,7 +58,7 @@ int verb_printf(int level, int verbose, const char *fmt, ...)
     return ret;
 }
 
-int read_file(const char * const fname)
+MP42File *open_mp42(const char * const fname, NSURL **url)
 {
     NSFileManager *filemgr = [[NSFileManager alloc] init];
     NSString *currentPath = [NSString stringWithFormat:@"%@/", [filemgr
@@ -68,6 +68,16 @@ int read_file(const char * const fname)
         stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     NSURL *fileURL = [NSURL URLWithString:fileNameAsURL];
     MP42File *mp4File = [[MP42File alloc] initWithURL:fileURL];
+
+    if (url) {
+        *url = fileURL;
+    }
+    return mp4File;
+}
+
+int read_file(const char * const fname)
+{
+    MP42File *mp4File = open_mp42(fname, NULL);
     MP42Metadata *metadata;
 
     if (!mp4File) {
@@ -271,11 +281,8 @@ int process_file(const char * const fname, const char *new_genre,
     }
 
     NSMutableDictionary<NSString *, id> *fileAttributes = [NSMutableDictionary dictionary];
-    NSString *fileNameAsURL = [[NSString stringWithFormat:@"file://%@%s",
-        (fname[0] == '/') ? @"" : currentPath, fname]
-        stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-    NSURL *fileURL = [NSURL URLWithString:fileNameAsURL];
-    MP42File *mp4File = [[MP42File alloc] initWithURL:fileURL];
+    NSURL *fileURL;
+    MP42File *mp4File = open_mp42(fname, &fileURL);
     if (!mp4File) {
         fprintf(stderr, "%s: couldn't open %s\n", prg, fname);
         return -1;
