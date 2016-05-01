@@ -108,6 +108,44 @@ int read_file(const char * const fname)
     return 0;
 }
 
+int extract_artwork(const char * const fname)
+{
+    NSString *fileName = [[[NSString stringWithUTF8String:fname]
+        lastPathComponent] stringByDeletingPathExtension];
+    MP42File *mp4File = open_mp42(fname, NULL);
+    int i = 0;
+    NSMutableArray<MP42Image *> *artworks;
+
+    if (!mp4File) {
+        fprintf(stderr, "%s: couldn't open %s\n", prg, fname);
+        return -1;
+    }
+
+    artworks = [[mp4File metadata] artworks];
+    for (MP42Image *artwork in artworks) {
+        NSData *imageData = [[artwork image] TIFFRepresentation];
+        NSBitmapImageRep *imageRep = [NSBitmapImageRep imageRepWithData:imageData];
+        NSDictionary *imageProps = [NSDictionary dictionaryWithObject:
+            [NSNumber numberWithFloat:9.0] forKey:NSImageCompressionFactor];
+        NSString *fmt = (i == 0) ? @"artwork-%@.png" : @"artwork-%03d-%@.png";
+        NSString *imageFileName;
+        BOOL ret;
+
+        imageFileName = [NSString stringWithFormat:fmt, fileName, i];
+        imageData = [imageRep representationUsingType:NSPNGFileType
+            properties:imageProps];
+        ret = [imageData writeToFile:imageFileName atomically:NO];
+        if (!ret) {
+            fprintf(stderr, "%s: couldn't write %s -- %s\n", prg,
+                [imageFileName UTF8String], strerror(errno));
+            return -1;
+        }
+        i++;
+    }
+
+    return 0;
+}
+
 int process_file(const char * const fname, const char *new_genre,
     int total_tracks, int image_index, const char *image, const char *language,
     const char *track_title, int season, int episode, BOOL preserve,
@@ -352,14 +390,18 @@ int tagler_main(int argc, char * const argv[])
     int verbose = 0;
     BOOL preserve = FALSE;
     BOOL read_mode = FALSE;
+    BOOL extract_mode = FALSE;
     char *genre = NULL;
     char *language = NULL;
     char *title = NULL;
     char *image = NULL;
 
     prg = basename(argv[0]);
-    while ((ch = getopt(argc, argv, "I:L:PT:e:hg:i:t:rs:v")) != -1) {
+    while ((ch = getopt(argc, argv, "EI:L:PT:e:hg:i:t:rs:v")) != -1) {
         switch (ch) {
+            case 'E':
+                extract_mode = TRUE;
+                break;
             case 'I':
                 image = optarg;
                 break;
@@ -388,6 +430,7 @@ int tagler_main(int argc, char * const argv[])
             case 'h':
                 fprintf(stderr, "usage: %s [<option(s)>] <file(s)>\n", prg);
                 fprintf(stderr,
+                    "       -E (extract artwork image(s))\n"
                     "       -I<image-file>\n"
                     "       -L<language>\n"
                     "       -P (preserve timestamp)\n"
@@ -444,10 +487,16 @@ int tagler_main(int argc, char * const argv[])
         fprintf(stderr, "%s: -r can't be combined with another option\n", prg);
         return 1;
     }
+    if (extract_mode && optind != 2) {
+        fprintf(stderr, "%s: -E can't be combined with another option\n", prg);
+        return 1;
+    }
 
     for (i = optind; i < argc; i++) {
         if (read_mode) {
             ret = read_file(argv[i]);
+        } else if (extract_mode) {
+            ret = extract_artwork(argv[i]);
         } else {
             ret = process_file(argv[i], genre, tracks, image_number, image,
                 language, title, season, episode, preserve, verbose);
