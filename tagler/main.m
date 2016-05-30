@@ -127,11 +127,16 @@ int extract_artwork(const char * const fname)
         NSBitmapImageRep *imageRep = [NSBitmapImageRep imageRepWithData:imageData];
         NSDictionary *imageProps = [NSDictionary dictionaryWithObject:
             [NSNumber numberWithFloat:9.0] forKey:NSImageCompressionFactor];
-        NSString *fmt = (i == 0) ? @"artwork-%@.png" : @"artwork-%03d-%@.png";
         NSString *imageFileName;
         BOOL ret;
 
-        imageFileName = [NSString stringWithFormat:fmt, fileName, i];
+        if (i == 0) {
+            imageFileName = [NSString stringWithFormat:@"artwork-%@.png",
+                fileName];
+        } else {
+            imageFileName = [NSString stringWithFormat:@"artwork-%03d-%@.png",
+                i, fileName];
+        }
         imageData = [imageRep representationUsingType:NSPNGFileType
             properties:imageProps];
         ret = [imageData writeToFile:imageFileName atomically:NO];
