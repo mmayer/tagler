@@ -520,6 +520,8 @@ int main(int argc, char * const argv[])
 
     @autoreleasepool {
         ret = tagler_main(argc, argv);
+        if (ret < 0)
+            ret = 1;
     }
     return ret;
 }
