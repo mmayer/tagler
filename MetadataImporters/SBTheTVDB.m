@@ -6,8 +6,8 @@
 //
 //
 
-#import <MP42Foundation/MP42Ratings.h>
-#import <MP42Foundation/MP42Languages.h>
+#import <MP42Foundation/MP42/MP42Ratings.h>
+#import <MP42Foundation/MP42/MP42Languages.h>
 
 #import "SBTheTVDB.h"
 

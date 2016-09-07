@@ -7,7 +7,7 @@
 //
 
 #import "SBMetadataResult.h"
-#import <MP42Foundation/MP42Metadata.h>
+#import <MP42Foundation/MP42/MP42Metadata.h>
 
 @implementation SBMetadataResult
 

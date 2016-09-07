@@ -7,10 +7,10 @@
 //
 
 @import AppKit;
-#import <MP42Foundation/MP42File.h>
-#import <MP42Foundation/MP42Image.h>
-#import <MP42Foundation/MP42Metadata.h>
-#import <MP42Foundation/MP42Languages.h>
+#import <MP42Foundation/MP42/MP42File.h>
+#import <MP42Foundation/MP42/MP42Image.h>
+#import <MP42Foundation/MP42/MP42Metadata.h>
+#import <MP42Foundation/MP42/MP42Languages.h>
 #import <MP42Foundation/MP42/MP42Utilities.h>
 
 #import <MetadataImporters/SBMetadataImporter.h>
@@ -67,7 +67,7 @@ MP42File *open_mp42(const char * const fname, NSURL **url)
         (fname[0] == '/') ? @"" : currentPath, fname]
         stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     NSURL *fileURL = [NSURL URLWithString:fileNameAsURL];
-    MP42File *mp4File = [[MP42File alloc] initWithURL:fileURL];
+    MP42File *mp4File = [[MP42File alloc] initWithURL:fileURL error:NULL];
 
     if (url) {
         *url = fileURL;
