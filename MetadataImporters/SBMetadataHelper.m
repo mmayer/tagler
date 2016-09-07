@@ -55,6 +55,20 @@
 
     NSMutableArray<NSString *> *args = [[NSMutableArray alloc] initWithCapacity:3];
     NSString *path = [[NSBundle bundleForClass:[self class]] pathForResource:@"ParseFilename" ofType:@""];
+    if (!path) {
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        NSString *home = [[[NSProcessInfo processInfo] environment] objectForKey:@"HOME"];
+        path = [NSString stringWithFormat:@"%@/Library/Application Support/tagler", home];
+        if (![fileManager fileExistsAtPath:path]) {
+            path = [defaults valueForKey:@"SBMetadataPreference|PerlPath"];
+        }
+        if (![fileManager fileExistsAtPath:path]) {
+            fprintf(stderr, "couldn't find Perl scripts at %s\n", [path
+                UTF8String]);
+            return nil;
+        }
+    }
     [args addObject:[NSString stringWithFormat:@"-I%@/lib", path]];
     [args addObject:[NSString stringWithFormat:@"%@/ParseFilename.pl", path]];
     [args addObject:filename];
@@ -156,6 +170,7 @@
 + (nullable NSData *)downloadDataFromURL:(NSURL *)url withCachePolicy:(SBCachePolicy)policy error:(NSError * __autoreleasing *)error  {
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSString *bundleName = [NSBundle mainBundle].infoDictionary[@"CFBundleIdentifier"];
+    if (!bundleName) bundleName = @"";
     NSURL *cacheURL = [[fileManager URLsForDirectory:NSCachesDirectory inDomains:NSUserDomainMask].firstObject URLByAppendingPathComponent:bundleName];
 
 
