@@ -12,22 +12,45 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class MP42Image;
 @class MP42Metadata;
+@class SBMetadataResultMap;
 
-@interface SBMetadataResult : NSObject {
-@private
-    NSMutableDictionary<NSString *, id> *_tagsDict;
+// Common Keys
+extern NSString *const SBMetadataResultName;
+extern NSString *const SBMetadataResultComposer;
+extern NSString *const SBMetadataResultGenre;
+extern NSString *const SBMetadataResultReleaseDate;
+extern NSString *const SBMetadataResultDescription;
+extern NSString *const SBMetadataResultLongDescription;
+extern NSString *const SBMetadataResultRating;
+extern NSString *const SBMetadataResultStudio;
+extern NSString *const SBMetadataResultCast;
+extern NSString *const SBMetadataResultDirector;
+extern NSString *const SBMetadataResultProducers;
+extern NSString *const SBMetadataResultScreenwriters;
+extern NSString *const SBMetadataResultExecutiveProducer;
+extern NSString *const SBMetadataResultCopyright;
 
-    NSMutableArray<MP42Image *> *_artworks;
+// iTunes Keys
+extern NSString *const SBMetadataResultContentID;
+extern NSString *const SBMetadataResultArtistID;
+extern NSString *const SBMetadataResultPlaylistID;
+extern NSString *const SBMetadataResultITunesCountry;
+extern NSString *const SBMetadataResultITunesURL;
 
-    NSArray<NSURL *>        *_artworkThumbURLs;
-    NSArray<NSURL *>        *_artworkFullsizeURLs;
-    NSArray<NSString *>     *_artworkProviderNames;
+// TV Show Keys
+extern NSString *const SBMetadataResultSeriesName;
+extern NSString *const SBMetadataResultSeriesDescription;
+extern NSString *const SBMetadataResultTrackNumber;
+extern NSString *const SBMetadataResultDiskNumber;
+extern NSString *const SBMetadataResultEpisodeNumber;
+extern NSString *const SBMetadataResultEpisodeID;
+extern NSString *const SBMetadataResultSeason;
+extern NSString *const SBMetadataResultNetwork;
 
-    NSString *_ratingiTunesCode;
+@interface SBMetadataResult : NSObject
 
-    uint8_t _mediaKind;
-    uint8_t _contentRating;
-}
++ (NSArray<NSString *> *)movieKeys;
++ (NSArray<NSString *> *)tvShowKeys;
 
 - (void)merge:(SBMetadataResult *)aObject;
 
@@ -44,11 +67,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readonly) NSMutableArray<MP42Image *> *artworks;
 
-@property (nonatomic, readwrite, retain, nullable) NSArray<NSURL *> *artworkThumbURLs;
-@property (nonatomic, readwrite, retain, nullable) NSArray<NSURL *> *artworkFullsizeURLs;
-@property (nonatomic ,readwrite, retain, nullable) NSArray<NSString *> *artworkProviderNames;
+@property (nonatomic, readwrite, strong, nullable) NSArray<NSURL *> *artworkThumbURLs;
+@property (nonatomic, readwrite, strong, nullable) NSArray<NSURL *> *artworkFullsizeURLs;
+@property (nonatomic, readwrite, strong, nullable) NSArray<NSString *> *artworkProviderNames;
 
-@property (nonatomic, readonly) MP42Metadata *metadata;
+- (MP42Metadata *)metadataUsingMap:(SBMetadataResultMap *)map keepEmptyKeys:(BOOL)keep;
 
 @end
 

@@ -14,6 +14,7 @@
 #import <MP42Foundation/MP42/MP42Utilities.h>
 
 #import <MetadataImporters/SBMetadataImporter.h>
+#import <MetadataImporters/SBMetadataResultMap.h>
 
 #import <libgen.h>
 #import <unistd.h>
@@ -158,6 +159,7 @@ int process_file(const char * const fname, const char *new_genre,
 {
     SBMetadataResult *m, *firstHit;
     SBMetadataImporter *searcher;
+    SBMetadataResultMap *resultMap;
     NSArray<SBMetadataResult *> *result;
     NSError *error = nil;
     NSString *title = nil;
@@ -165,7 +167,7 @@ int process_file(const char * const fname, const char *new_genre,
     NSString *episodeNum = nil;
     NSString *lang = nil;
     NSString *mediaType = nil;
-    NSDictionary *parsed = nil;
+    NSDictionary<NSString *, NSString *> *parsed = nil;
     BOOL isMovie = NO;
 
     // Skip parsing if title, season and episode are given on the command line.
@@ -182,9 +184,11 @@ int process_file(const char * const fname, const char *new_genre,
     verb_printf(1, verbose, "Media type: %s\n", [mediaType UTF8String]);
 
     if ([mediaType isEqualToString:@"movie"]) {
+        resultMap = [SBMetadataResultMap movieDefaultMap];
         searcher = [SBMetadataImporter importerForProvider:@"iTunes Store"];
         isMovie = YES;
     } else if ([mediaType isEqualToString:@"tv"]) {
+        resultMap = [SBMetadataResultMap tvShowDefaultMap];
         searcher = [SBMetadataImporter importerForProvider:@"TheTVDB"];
     } else {
         fprintf(stderr, "%s: unsupported media type \"%s\"\n", prg,
@@ -267,35 +271,35 @@ int process_file(const char * const fname, const char *new_genre,
     }
 
     if (!isMovie && total_tracks > 0) {
-        NSString *track = [m.tags objectForKey:@"Track #"];
+        NSString *track = [m.tags objectForKey:@"{Track #}"];
         if (track) {
             NSString *trackWithTotal = [NSString stringWithFormat:@"%@/%d",
                 track, total_tracks ];
-            [m.tags setObject:trackWithTotal forKey:@"Track #"];
+            [m.tags setObject:trackWithTotal forKey:@"{Track #}"];
         }
     }
 
     if (new_genre) {
-        NSString *genre = [m.tags objectForKey:@"Genre"];
+        NSString *genre = [m.tags objectForKey:@"{Genre}"];
         if (genre) {
             NSString *newGenre = [[NSString alloc] initWithCString:new_genre
                 encoding:NSUTF8StringEncoding];
-            [m.tags setObject:newGenre forKey:@"Genre"];
+            [m.tags setObject:newGenre forKey:@"{Genre}"];
         }
     }
 
     if (isMovie) {
         printf("Processing \"%s\" (released %s)...\n",
-            [m.tags[@"Name"] UTF8String],
-            [m.tags[@"Release Date"] UTF8String]);
+            [m.tags[@"{Name}"] UTF8String],
+            [m.tags[@"{Release Date}"] UTF8String]);
     } else {
         printf("Processing %s S%02dE%02d (ID %s), \"%s\" (aired %s)...\n",
-            [m.tags[@"TV Show"] UTF8String],
-            [m.tags[@"TV Season"] intValue],
-            [m.tags[@"TV Episode #"] intValue],
-            [m.tags[@"TV Episode ID"] UTF8String],
-            [m.tags[@"Name"] UTF8String],
-            [m.tags[@"Release Date"] UTF8String]);
+            [m.tags[@"{Series Name}"] UTF8String],
+            [m.tags[@"{Season}"] intValue],
+            [m.tags[@"{Episode #}"] intValue],
+            [m.tags[@"{Episode ID}"] UTF8String],
+            [m.tags[@"{Name}"] UTF8String],
+            [m.tags[@"{Release Date}"] UTF8String]);
     }
 
     NSData *artworkData;
@@ -324,6 +328,7 @@ int process_file(const char * const fname, const char *new_genre,
     }
 
     NSMutableDictionary<NSString *, id> *fileAttributes = [NSMutableDictionary dictionary];
+    MP42Metadata *meta = [m metadataUsingMap:resultMap keepEmptyKeys:NO];
     NSURL *fileURL;
     MP42File *mp4File = open_mp42(fname, &fileURL);
     if (!mp4File) {
@@ -331,7 +336,7 @@ int process_file(const char * const fname, const char *new_genre,
         return -1;
     }
 
-    [mp4File.metadata mergeMetadata:m.metadata];
+    [mp4File.metadata mergeMetadata:meta];
 
     /*
      * This has to come after merging the rest of the meta data. I found no

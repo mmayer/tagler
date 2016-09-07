@@ -7,49 +7,111 @@
 //
 
 #import "SBMetadataResult.h"
+#import "SBMetadataResultMap.h"
 #import <MP42Foundation/MP42/MP42Metadata.h>
 
+// Common Keys
+NSString *const SBMetadataResultName = @"{Name}";
+NSString *const SBMetadataResultComposer = @"{Composer}";
+NSString *const SBMetadataResultGenre = @"{Genre}";
+NSString *const SBMetadataResultReleaseDate = @"{Release Date}";
+NSString *const SBMetadataResultDescription = @"{Description}";
+NSString *const SBMetadataResultLongDescription = @"{Long Description}";
+NSString *const SBMetadataResultRating = @"{Rating}";
+NSString *const SBMetadataResultStudio = @"{Studio}";
+NSString *const SBMetadataResultCast = @"{Cast}";
+NSString *const SBMetadataResultDirector = @"{Director}";
+NSString *const SBMetadataResultProducers = @"{Producers}";
+NSString *const SBMetadataResultScreenwriters = @"{Screenwriters}";
+NSString *const SBMetadataResultExecutiveProducer = @"{Executive Producer}";
+NSString *const SBMetadataResultCopyright = @"{Copyright}";
+
+// iTunes Keys
+NSString *const SBMetadataResultContentID = @"{contentID}";
+NSString *const SBMetadataResultArtistID = @"{artistID}";
+NSString *const SBMetadataResultPlaylistID = @"{playlistID}";
+NSString *const SBMetadataResultITunesCountry = @"{iTunes Country}";
+NSString *const SBMetadataResultITunesURL = @"{iTunes URL}";
+
+// TV Show Keys
+NSString *const SBMetadataResultSeriesName = @"{Series Name}";
+NSString *const SBMetadataResultSeriesDescription = @"{Series Description}";
+NSString *const SBMetadataResultTrackNumber = @"{Track #}";
+NSString *const SBMetadataResultDiskNumber = @"{Disk #}";
+NSString *const SBMetadataResultEpisodeNumber = @"{Episode #}";
+NSString *const SBMetadataResultEpisodeID = @"{Episode ID}";
+NSString *const SBMetadataResultSeason = @"{Season}";
+NSString *const SBMetadataResultNetwork = @"{Network}";
+
 @implementation SBMetadataResult
-
-@synthesize artworks = _artworks;
-
-@synthesize tags = _tagsDict;
-
-@synthesize artworkThumbURLs = _artworkThumbURLs;
-@synthesize artworkFullsizeURLs = _artworkFullsizeURLs;
-@synthesize artworkProviderNames = _artworkProviderNames;
-
-@synthesize mediaKind = _mediaKind;
-@synthesize contentRating = _contentRating;
 
 - (instancetype)init
 {
     if ((self = [super init]))
     {
-        _tagsDict = [[NSMutableDictionary alloc] init];
+        _tags = [[NSMutableDictionary alloc] init];
         _artworks = [[NSMutableArray alloc] init];
     }
 
     return self;
 }
 
--(void)dealloc
++ (NSArray<NSString *> *)movieKeys
 {
-    [_artworks release];
+    return @[SBMetadataResultName,
+             SBMetadataResultComposer,
+             SBMetadataResultGenre,
+             SBMetadataResultReleaseDate,
+             SBMetadataResultDescription,
+             SBMetadataResultLongDescription,
+             SBMetadataResultRating,
+             SBMetadataResultStudio,
+             SBMetadataResultCast,
+             SBMetadataResultDirector,
+             SBMetadataResultProducers,
+             SBMetadataResultScreenwriters,
+             SBMetadataResultExecutiveProducer,
+             SBMetadataResultCopyright,
+             SBMetadataResultContentID,
+             SBMetadataResultITunesCountry];
+}
 
-    [_artworkThumbURLs release];
-    [_artworkFullsizeURLs release];
-    [_artworkProviderNames release];
++ (NSArray<NSString *> *)tvShowKeys
+{
+    return @[SBMetadataResultName,
+             SBMetadataResultSeriesName,
+             SBMetadataResultComposer,
+             SBMetadataResultGenre,
+             SBMetadataResultReleaseDate,
 
-    [_ratingiTunesCode release];
-    [_tagsDict release];
-    
-    [super dealloc];
+             SBMetadataResultTrackNumber,
+             SBMetadataResultDiskNumber,
+             SBMetadataResultEpisodeNumber,
+             SBMetadataResultNetwork,
+             SBMetadataResultEpisodeID,
+             SBMetadataResultSeason,
+
+             SBMetadataResultDescription,
+             SBMetadataResultLongDescription,
+             SBMetadataResultSeriesDescription,
+
+             SBMetadataResultRating,
+             SBMetadataResultStudio,
+             SBMetadataResultCast,
+             SBMetadataResultDirector,
+             SBMetadataResultProducers,
+             SBMetadataResultScreenwriters,
+             SBMetadataResultExecutiveProducer,
+             SBMetadataResultCopyright,
+             SBMetadataResultContentID,
+             SBMetadataResultArtistID,
+             SBMetadataResultPlaylistID,
+             SBMetadataResultITunesCountry];
 }
 
 - (void)merge:(SBMetadataResult *)metadata
 {
-    [_tagsDict addEntriesFromDictionary:metadata.tags];
+    [_tags addEntriesFromDictionary:metadata.tags];
 
     for (MP42Image *artwork in metadata.artworks) {
         [_artworks addObject:artwork];
@@ -61,17 +123,17 @@
 
 - (void)removeTagForKey:(NSString *)aKey
 {
-    [_tagsDict removeObjectForKey:aKey];
+    [_tags removeObjectForKey:aKey];
 }
 
 - (void)setTag:(id)value forKey:(NSString *)key
 {
-    [_tagsDict setObject:value forKey:key];
+    _tags[key] = value;
 }
 
 - (id)objectForKeyedSubscript:(NSString *)key
 {
-    return [_tagsDict objectForKey:key];
+    return _tags[key];
 }
 
 - (void)setObject:(id)obj forKeyedSubscript:(NSString *)key
@@ -84,14 +146,32 @@
     }
 }
 
-- (MP42Metadata *)metadata
+- (MP42Metadata *)metadataUsingMap:(SBMetadataResultMap *)map keepEmptyKeys:(BOOL)keep
 {
     MP42Metadata *metadata = [[MP42Metadata alloc] init];
 
-    for (NSString *key in [metadata writableMetadata]) {
-        NSString *tagValue;
-        if ((tagValue = _tagsDict[key])) {
-            [metadata setTag:tagValue forKey:key];
+    for (SBMetadataResultMapItem *item in map.items) {
+        NSMutableString *result = [NSMutableString string];
+        for (NSString *component in item.value) {
+            if ([component hasPrefix:@"{"] && [component hasSuffix:@"}"] && component.length > 2) {
+                id value = _tags[component];
+                if ([value isKindOfClass:[NSString class]] && [value length]) {
+                    [result appendString:value];
+                }
+                else if ([value isKindOfClass:[NSNumber class]]) {
+                    [result appendString:[value stringValue]];
+                }
+            }
+            else {
+                [result appendString:component];
+            }
+        }
+
+        if (result.length) {
+            [metadata setTag:result forKey:item.key];
+        }
+        else if (keep) {
+            [metadata setTag:result forKey:item.key];
         }
     }
 
@@ -102,7 +182,7 @@
     metadata.mediaKind = self.mediaKind;
     metadata.contentRating = self.contentRating;
 
-    return [metadata autorelease];
+    return metadata;
 }
 
 @end
