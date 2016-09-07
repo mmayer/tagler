@@ -255,7 +255,7 @@ int process_file(const char * const fname, const char *new_genre,
     }
 
     if (image_index >= m.artworkFullsizeURLs.count) {
-        image_index = m.artworkFullsizeURLs.count - 1;
+        image_index = (int)m.artworkFullsizeURLs.count - 1;
     }
 
     verb_printf(1, verbose, "Image #: %d\n", image_index);
@@ -417,7 +417,7 @@ int tagler_main(int argc, char * const argv[])
                 preserve = TRUE;
                 break;
             case 'T':
-                tracks = strtol(optarg, &errp, 10);
+                tracks = (int)strtol(optarg, &errp, 10);
                 if (errp[0] != '\0') {
                     fprintf(stderr, "%s: invalid track number -- %s\n", prg,
                         optarg);
@@ -425,7 +425,7 @@ int tagler_main(int argc, char * const argv[])
                 }
                 break;
             case 'e':
-                episode = strtol(optarg, &errp, 10);
+                episode = (int)strtol(optarg, &errp, 10);
                 if (errp[0] != '\0') {
                     fprintf(stderr, "%s: invalid episode number -- %s\n", prg,
                         optarg);
@@ -452,7 +452,7 @@ int tagler_main(int argc, char * const argv[])
                 genre = optarg;
                 break;
             case 'i':
-                image_number = strtol(optarg, &errp, 10);
+                image_number = (int)strtol(optarg, &errp, 10);
                 if (errp[0] != '\0') {
                     fprintf(stderr, "%s: invalid image number -- %s\n", prg,
                         optarg);
@@ -466,7 +466,7 @@ int tagler_main(int argc, char * const argv[])
                 read_mode = TRUE;
                 break;
             case 's':
-                season = strtol(optarg, &errp, 10);
+                season = (int)strtol(optarg, &errp, 10);
                 if (errp[0] != '\0') {
                     fprintf(stderr, "%s: invalid season number -- %s\n", prg,
                         optarg);
