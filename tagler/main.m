@@ -289,12 +289,16 @@ int process_file(const char * const fname, const char *new_genre,
     }
 
     if (isMovie) {
-        printf("Processing \"%s\" (released %s)...\n",
+        printf("Processing \"%s\" (%s), released %s...\n",
             [m.tags[@"{Name}"] UTF8String],
+            [m.tags[@"{Genre}"] UTF8String],
             [m.tags[@"{Release Date}"] UTF8String]);
     } else {
-        printf("Processing %s S%02dE%02d (ID %s), \"%s\" (aired %s)...\n",
+        printf("Processing \"%s\" (%s)...\n"
+               "            S%02dE%02d (ID %s), \"%s\"\n"
+               "            Aired %s\n",
             [m.tags[@"{Series Name}"] UTF8String],
+            [m.tags[@"{Genre}"] UTF8String],
             [m.tags[@"{Season}"] intValue],
             [m.tags[@"{Episode #}"] intValue],
             [m.tags[@"{Episode ID}"] UTF8String],
