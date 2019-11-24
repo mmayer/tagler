@@ -169,7 +169,7 @@ static NSArray<NSString *> *TVDBlanguages;
 
 	for (NSDictionary *banner in bannersArray) {
 		if ([[banner retrieveForPath:@"BannerType.text"] isEqualToString:@"season"] &&
-            [[banner retrieveForPath:@"BannerType2.text"] isEqualToString:@"season"] &&
+            //[[banner retrieveForPath:@"BannerType2.text"] isEqualToString:@"season"] &&
             [[banner retrieveForPath:@"Season.text"] isEqualToString:aMetadata[SBMetadataResultSeason]]) {
 			NSURL *u = [NSURL URLWithString:[NSString stringWithFormat:@"http://thetvdb.com/banners/%@", [banner retrieveForPath:@"BannerPath.text"]]];
 			[newArtworkThumbURLs addObject:u];
