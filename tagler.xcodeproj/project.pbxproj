@@ -17,6 +17,7 @@
 		28249A151C74F07500B0C1E5 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 28249A141C74F07500B0C1E5 /* main.m */; };
 		28249A301C74F7DD00B0C1E5 /* MP42Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28249A241C74F2FB00B0C1E5 /* MP42Foundation.framework */; };
 		283CC8581D7F869100A982ED /* SBMetadataResultMap.m in Sources */ = {isa = PBXBuildFile; fileRef = 283CC8571D7F869100A982ED /* SBMetadataResultMap.m */; };
+		28E3EB47238AF37A0065F2E9 /* SBTheTVDB2.m in Sources */ = {isa = PBXBuildFile; fileRef = 28E3EB46238AF37A0065F2E9 /* SBTheTVDB2.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -68,6 +69,7 @@
 		28249A141C74F07500B0C1E5 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		28249A1C1C74F2FB00B0C1E5 /* MP42Foundation.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = MP42Foundation.xcodeproj; path = MP42Foundation/MP42Foundation.xcodeproj; sourceTree = "<group>"; };
 		283CC8571D7F869100A982ED /* SBMetadataResultMap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SBMetadataResultMap.m; path = MetadataImporters/SBMetadataResultMap.m; sourceTree = "<group>"; };
+		28E3EB46238AF37A0065F2E9 /* SBTheTVDB2.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = SBTheTVDB2.m; path = MetadataImporters/SBTheTVDB2.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -91,6 +93,7 @@
 				2822191A1C7BBED80031C9CE /* SBMetadataHelper.m */,
 				282219181C7BBE390031C9CE /* SBTheMovieDB3.m */,
 				282219161C7BBE270031C9CE /* SBTheTVDB.m */,
+				28E3EB46238AF37A0065F2E9 /* SBTheTVDB2.m */,
 				282219141C7BBDFD0031C9CE /* SBiTunesStore.m */,
 				282219121C7BBD860031C9CE /* SBMetadataImporter.m */,
 				28249A1C1C74F2FB00B0C1E5 /* MP42Foundation.xcodeproj */,
@@ -217,6 +220,7 @@
 				2822191F1C7BBF500031C9CE /* XMLReader.m in Sources */,
 				2822191D1C7BBF160031C9CE /* SBMetadataResult.m in Sources */,
 				283CC8581D7F869100A982ED /* SBMetadataResultMap.m in Sources */,
+				28E3EB47238AF37A0065F2E9 /* SBTheTVDB2.m in Sources */,
 				2822191B1C7BBED80031C9CE /* SBMetadataHelper.m in Sources */,
 				282219191C7BBE390031C9CE /* SBTheMovieDB3.m in Sources */,
 				282219171C7BBE270031C9CE /* SBTheTVDB.m in Sources */,
