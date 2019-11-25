@@ -170,7 +170,7 @@
 + (nullable NSData *)downloadDataFromURL:(NSURL *)url withCachePolicy:(SBCachePolicy)policy error:(NSError * __autoreleasing *)error  {
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSString *bundleName = [NSBundle mainBundle].infoDictionary[@"CFBundleIdentifier"];
-    if (!bundleName) bundleName = @"";
+    if (!bundleName) bundleName = @"tagler";
     NSURL *cacheURL = [[fileManager URLsForDirectory:NSCachesDirectory inDomains:NSUserDomainMask].firstObject URLByAppendingPathComponent:bundleName];
 
 
