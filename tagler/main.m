@@ -306,7 +306,7 @@ int process_file(const char * const fname, const char *new_genre,
             [m.tags[@"{Release Date}"] UTF8String]);
     }
 
-    NSData *artworkData;
+    NSData *artworkData = nil;
     NSFileManager *filemgr = [[NSFileManager alloc] init];
     NSString *currentPath = [NSString stringWithFormat:@"%@/", [filemgr
         currentDirectoryPath]];
@@ -319,10 +319,12 @@ int process_file(const char * const fname, const char *new_genre,
         artworkData = [SBMetadataHelper downloadDataFromURL:imageURL
             withCachePolicy:SBDefaultPolicy];
 
-    } else {
+    } else if (image_index >= 0) {
         NSURL *artworkURL = m.artworkFullsizeURLs[image_index];
         artworkData = [SBMetadataHelper downloadDataFromURL:artworkURL
             withCachePolicy:SBDefaultPolicy];
+    } else {
+        printf("No artwork found!\n");
     }
     if (artworkData && artworkData.length) {
         MP42Image *artwork = [[MP42Image alloc] initWithData:artworkData type:MP42_ART_JPEG];
