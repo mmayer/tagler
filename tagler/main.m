@@ -152,13 +152,13 @@ int extract_artwork(const char * const fname)
     return 0;
 }
 
-int process_file(const char * const fname, const char *new_genre,
-    int total_tracks, int image_index, const char *image, const char *language,
-    const char *track_title, int season, int episode, BOOL preserve,
-    int verbose)
+int process_file(const char * const fname, const char *provider,
+    const char *new_genre, int total_tracks, int image_index, const char *image,
+    const char *language, const char *track_title, int season, int episode,
+    BOOL preserve, int verbose)
 {
     SBMetadataResult *m, *firstHit;
-    SBMetadataImporter *searcher;
+    SBMetadataImporter *searcher = nil;
     SBMetadataResultMap *resultMap;
     NSArray<SBMetadataResult *> *result;
     NSError *error = nil;
@@ -181,23 +181,35 @@ int process_file(const char * const fname, const char *new_genre,
         // Since we have a season and an episode, it must be a TV show.
         mediaType = @"tv";
     }
+
     verb_printf(1, verbose, "Media type: %s\n", [mediaType UTF8String]);
 
     if ([mediaType isEqualToString:@"movie"]) {
         resultMap = [SBMetadataResultMap movieDefaultMap];
-        searcher = [SBMetadataImporter importerForProvider:@"iTunes Store"];
         isMovie = YES;
     } else if ([mediaType isEqualToString:@"tv"]) {
         resultMap = [SBMetadataResultMap tvShowDefaultMap];
-        searcher = [SBMetadataImporter importerForProvider:@"TheTVDB2"];
-        if (!searcher) {
-            printf("%s: Falling back to TheTVDB API v1\n", prg);
-            searcher = [SBMetadataImporter importerForProvider:@"TheTVDB"];
-        }
     } else {
         fprintf(stderr, "%s: unsupported media type \"%s\"\n", prg,
             [mediaType UTF8String]);
         return -1;
+    }
+
+    if (provider) {
+        verb_printf(1, verbose, "Search povider: %s\n", provider);
+        searcher = [SBMetadataImporter importerForProvider:
+                    [NSString stringWithCString:provider
+                                       encoding:NSUTF8StringEncoding]];
+    } else {
+        if ([mediaType isEqualToString:@"movie"]) {
+            searcher = [SBMetadataImporter importerForProvider:@"iTunes Store"];
+        } else if ([mediaType isEqualToString:@"tv"]) {
+            searcher = [SBMetadataImporter importerForProvider:@"TheTVDB2"];
+            if (!searcher) {
+                printf("%s: Falling back to TheTVDB API v1\n", prg);
+                searcher = [SBMetadataImporter importerForProvider:@"TheTVDB"];
+            }
+        }
     }
 
     if (!searcher) {
@@ -413,11 +425,12 @@ int tagler_main(int argc, char * const argv[])
     BOOL extract_mode = FALSE;
     char *genre = NULL;
     char *language = NULL;
+    char *search_provider = NULL;
     char *title = NULL;
     char *image = NULL;
 
     prg = basename(argv[0]);
-    while ((ch = getopt(argc, argv, "EI:L:PT:e:hg:i:t:rs:v")) != -1) {
+    while ((ch = getopt(argc, argv, "EI:L:PT:e:hg:i:p:t:rs:v")) != -1) {
         switch (ch) {
             case 'E':
                 extract_mode = TRUE;
@@ -457,6 +470,7 @@ int tagler_main(int argc, char * const argv[])
                     "       -T<total-tracks-per-seasion#>\n"
                     "       -g<genre>\n"
                     "       -i<image#>\n"
+                    "       -p<provider>\n"
                     "       -t<title>\n"
                     "       -r (read metadata from file)\n"
                     "       -s<season#>\n"
@@ -473,6 +487,9 @@ int tagler_main(int argc, char * const argv[])
                         optarg);
                     return 1;
                 }
+                break;
+            case 'p':
+                search_provider = optarg;
                 break;
             case 't':
                 title = optarg;
@@ -518,8 +535,9 @@ int tagler_main(int argc, char * const argv[])
         } else if (extract_mode) {
             ret = extract_artwork(argv[i]);
         } else {
-            ret = process_file(argv[i], genre, tracks, image_number, image,
-                language, title, season, episode, preserve, verbose);
+            ret = process_file(argv[i], search_provider, genre, tracks,
+                image_number, image, language, title, season, episode, preserve,
+                verbose);
         }
         if (ret < 0) {
             break;
