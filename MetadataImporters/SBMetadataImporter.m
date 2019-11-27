@@ -13,6 +13,7 @@
 #import "SBiTunesStore.h"
 #import "SBTheMovieDB3.h"
 #import "SBTheTVDB.h"
+#import "SBTheTVDB2.h"
 
 @interface SBMetadataImporter ()
 
@@ -30,7 +31,7 @@
     return @[@"TheMovieDB", @"iTunes Store"];
 }
 + (NSArray<NSString *> *)tvProviders {
-    return @[@"TheTVDB", @"iTunes Store"];
+    return @[@"TheTVDB", @"TheTVDB2", @"iTunes Store"];
 }
 
 + (NSArray<NSString *> *)languagesForProvider:(NSString *)aProvider {
@@ -47,8 +48,12 @@
 		return [[SBTheMovieDB3 alloc] init];
 	}
     else if ([aProvider isEqualToString:@"TheTVDB"]) {
-		return [[SBTheTVDB alloc] init];
-	}
+        return [[SBTheTVDB alloc] init];
+    }
+    else if ([aProvider isEqualToString:@"TheTVDB2"]) {
+        SBTheTVDB2 *provider = [[SBTheTVDB2 alloc] init];
+        return [provider login] ? provider : nil;
+    }
 	return nil;
 }
 

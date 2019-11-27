@@ -189,7 +189,11 @@ int process_file(const char * const fname, const char *new_genre,
         isMovie = YES;
     } else if ([mediaType isEqualToString:@"tv"]) {
         resultMap = [SBMetadataResultMap tvShowDefaultMap];
-        searcher = [SBMetadataImporter importerForProvider:@"TheTVDB"];
+        searcher = [SBMetadataImporter importerForProvider:@"TheTVDB2"];
+        if (!searcher) {
+            printf("%s: Falling back to TheTVDB API v1\n", prg);
+            searcher = [SBMetadataImporter importerForProvider:@"TheTVDB"];
+        }
     } else {
         fprintf(stderr, "%s: unsupported media type \"%s\"\n", prg,
             [mediaType UTF8String]);

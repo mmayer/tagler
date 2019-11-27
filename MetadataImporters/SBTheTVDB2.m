@@ -14,38 +14,193 @@
 #import "SBTheTVDB2.h"
 #import "SBiTunesStore.h"
 
-#define API_KEY @"3498815BE9484A62"
+#define API_URL @"https://api.thetvdb.com"
+
+#define API_KEY @"90195A61A24B686F"
 
 static NSArray<NSString *> *TVDBlanguages;
 
 @implementation SBTheTVDB2
 
+NSString *api_url = API_URL;
+NSString *api_key = API_KEY;
+
+NSString *api_token = nil;
+
 + (void)initialize
 {
+    if (self != [SBTheTVDB2 class]) {
+        return;
+    }
 }
 
-- (NSArray<SBMetadataResult *> *)searchTVSeries:(NSString *)aSeriesName language:(NSString *)aLanguage
+- (NSDictionary *)makeJsonRequest:(NSURL *)url withMethod:(NSString *)method withParams:(NSDictionary *)params
 {
+    NSURLResponse *response;
+    NSDictionary *resultJson;
+    NSData *responseData;
+    NSError *error = nil;
+    NSData *jsonBodyData;
+
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+
+    request.HTTPMethod = method;
+    [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+    [request setValue:@"application/json" forHTTPHeaderField:@"Accept"];
+    if (api_token) {
+        NSString *authToken = [NSString stringWithFormat:@"Bearer %@", api_token];
+        [request setValue:authToken forHTTPHeaderField:@"Authorization"];
+    }
+
+    if (params) {
+        jsonBodyData = [NSJSONSerialization dataWithJSONObject:params
+                                                       options:kNilOptions
+                                                         error:&error];
+        [request setHTTPBody:jsonBodyData];
+    }
+
+    responseData = [NSURLConnection sendSynchronousRequest:request
+                                         returningResponse:&response
+                                                     error:&error];
+    //[request release];
+
+    if (error != nil) {
+        // NSLog(@"connection: error is not nil: %@\n", [error userInfo]);
+        return nil;
+    }
+    resultJson = [NSJSONSerialization JSONObjectWithData:responseData
+                                                 options:kNilOptions
+                                                   error:&error];
+    //[responseData release];
+
+    if (error != nil) {
+        //NSLog(@"error is not nil: %@\n", [error userInfo]);
+        return nil;
+    }
+
+    return resultJson;
+}
+
+- (NSDictionary *)makeJsonRequest:(NSURL *)url withMethod:(NSString *)method
+{
+    return [self makeJsonRequest:url withMethod:method withParams:nil];
+}
+
+- (NSString *)getSeriesID:(NSString *)name
+{
+    NSString *encodedName = [name stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    NSURL *search_url = [NSURL URLWithString:[NSString stringWithFormat:@"%@/search/series?name=%@", api_url, encodedName]];
+    NSDictionary *resultJson = [self makeJsonRequest:search_url withMethod:@"GET"];
+
+    if (!resultJson) {
+//        NSLog(@"%s, %d\n", __func__, __LINE__);
+        return nil;
+    }
+    if (!resultJson[@"data"]) {
+//        NSLog(@"%s, %d\n", __func__, __LINE__);
+        return nil;
+    }
+    if (![resultJson[@"data"] isKindOfClass:[NSArray class]]) {
+//        NSLog(@"%s, %d\n", __func__, __LINE__);
+        return nil;
+    }
+
+    return resultJson[@"data"][0][@"id"];
+}
+
+- (NSArray *)getSeriesArtwork:(NSString *)series_id
+{
+    NSURL *search_url = [NSURL URLWithString:
+                         [NSString stringWithFormat:@"%@/series/%@/images/query?keyType=series",
+                          api_url, series_id]];
+    NSDictionary *resultJson = [self makeJsonRequest:search_url withMethod:@"GET"];
+
+    if (!resultJson) {
+        return nil;
+    }
+    if (!resultJson[@"data"]) {
+        return nil;
+    }
+    if (![resultJson[@"data"] isKindOfClass:[NSArray class]]) {
+        return nil;
+    }
+
+    return resultJson[@"data"];
+}
+
+- (NSDictionary *)queryEpisodeForSeries:(NSString *)series_id withSeason:(NSString *)season withEpisode:(NSString *)episode
+{
+    NSURL *search_url = [NSURL URLWithString:
+                         [NSString stringWithFormat:@"%@/series/%@/episodes/query?airedSeason=%@&airedEpisode=%@",
+                          api_url, series_id, season, episode]];
+    NSDictionary *resultJson = [self makeJsonRequest:search_url withMethod:@"GET"];
+
+    if (!resultJson) {
+        return nil;
+    }
+    if (!resultJson[@"data"]) {
+        return nil;
+    }
+    if (![resultJson[@"data"] isKindOfClass:[NSArray class]]) {
+        return nil;
+    }
+
+    return resultJson[@"data"][0];
+}
+
+
+- (SBTheTVDB2 *)login
+{
+    NSDictionary *jsonBodyDict = @{@"apikey" : api_key};
+    NSURL *login_url = [NSURL URLWithString:[NSString stringWithFormat:@"%@/login", api_url]];
+    NSDictionary *resultJson = [self makeJsonRequest:login_url withMethod:@"POST" withParams:jsonBodyDict];
+
+    api_token = [resultJson valueForKey:@"token"];
+
+    return nil;//self;
+}
+
+- (NSArray<SBMetadataResult *> *)searchTVSeries:(NSString *)aSeriesName
+                                       xlanguage:(NSString *)aLanguage
+{
+    NSLog(@"%s\n", __func__);
     return nil;
 }
 
-- (NSArray<SBMetadataResult *> *)searchTVSeries:(NSString *)aSeriesName language:(NSString *)aLanguage seasonNum:(NSString *)aSeasonNum episodeNum:(NSString *)aEpisodeNum
+- (NSArray<SBMetadataResult *> *)searchTVSeries:(NSString *)aSeriesName
+                                       language:(NSString *)aLanguage
+                                      seasonNum:(NSString *)aSeasonNum
+                                     episodeNum:(NSString *)aEpisodeNum
 {
+    NSString *series_id = [self getSeriesID:aSeriesName];
+    NSDictionary *seriesData = [self queryEpisodeForSeries:series_id
+                                                withSeason:aSeasonNum
+                                               withEpisode:aEpisodeNum];
+    NSArray *seriesArtwork = [self getSeriesArtwork:series_id];
+
+    NSLog(@"%@\n", seriesData[@"episodeName"]);
+    NSLog(@"%@\n", seriesData[@"overview"]);
+    NSLog(@"%@\n", seriesArtwork);
+
     return nil;
 }
 
-- (SBMetadataResult *)loadTVMetadata:(SBMetadataResult *)aMetadata language:(NSString *)aLanguage
+- (SBMetadataResult *)loadTVMetadata:(SBMetadataResult *)aMetadata
+                            language:(NSString *)aLanguage
 {
+    NSLog(@"%s\n", __func__);
     return nil;
 }
 
 + (NSString *)cleanPeopleList:(NSString *)s
 {
+    NSLog(@"%s\n", __func__);
     return nil;
 }
 
 + (SBMetadataResult *)metadataForEpisode:(NSDictionary *)aEpisode series:(NSDictionary *)aSeries
 {
+    NSLog(@"%s\n", __func__);
     return nil;
 }
 

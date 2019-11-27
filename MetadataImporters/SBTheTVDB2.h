@@ -12,6 +12,9 @@
 #import "SBMetadataImporter.h"
 
 @interface SBTheTVDB2 : SBMetadataImporter
+
+- (SBTheTVDB2 *)login;
+
 @end
 
 #endif /* SBTheTVDB2_h */
