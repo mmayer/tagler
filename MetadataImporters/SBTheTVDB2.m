@@ -157,7 +157,7 @@ NSString *api_token = nil;
 
     api_token = [resultJson valueForKey:@"token"];
 
-    return nil;//self;
+    return self;
 }
 
 - (NSArray<SBMetadataResult *> *)searchTVSeries:(NSString *)aSeriesName
