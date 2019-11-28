@@ -333,8 +333,10 @@ int process_file(const char * const fname, const char *provider,
             stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
         NSURL *imageURL = [NSURL URLWithString:imageAsURL];
         artworkData = [SBMetadataHelper downloadDataFromURL:imageURL
-            withCachePolicy:SBDefaultPolicy];
-
+            withCachePolicy:SBReloadIgnoringLocalCacheData];
+        if (!artworkData) {
+            printf("Couldn't load arwork from %s\n", image);
+        }
     } else if (image_index >= 0) {
         NSURL *artworkURL = m.artworkFullsizeURLs[image_index];
         artworkData = [SBMetadataHelper downloadDataFromURL:artworkURL
