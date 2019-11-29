@@ -86,26 +86,38 @@ NSString *api_token = nil;
     return [self makeJsonRequest:url withMethod:method withParams:nil];
 }
 
-- (NSString *)getSeriesID:(NSString *)name
+- (NSArray *)queryDB:(NSURL *)url
 {
-    NSString *encodedName = [name stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-    NSURL *search_url = [NSURL URLWithString:[NSString stringWithFormat:@"%@/search/series?name=%@", api_url, encodedName]];
-    NSDictionary *resultJson = [self makeJsonRequest:search_url withMethod:@"GET"];
+    NSDictionary *resultJson = [self makeJsonRequest:url withMethod:@"GET"];
 
     if (!resultJson) {
-//        NSLog(@"%s, %d\n", __func__, __LINE__);
         return nil;
     }
     if (!resultJson[@"data"]) {
-//        NSLog(@"%s, %d\n", __func__, __LINE__);
-        return nil;
-    }
-    if (![resultJson[@"data"] isKindOfClass:[NSArray class]]) {
-//        NSLog(@"%s, %d\n", __func__, __LINE__);
         return nil;
     }
 
-    return resultJson[@"data"][0][@"id"];
+    // Fake an array if it isn't already. We only need this for seriesInfo.
+    // This lets us use a common query method for all queries.
+    if (![resultJson[@"data"] isKindOfClass:[NSArray class]]) {
+        return @[ resultJson[@"data"] ];
+    }
+
+    return resultJson[@"data"];
+}
+
+- (NSString *)getSeriesID:(NSString *)name
+{
+    NSString *encodedName = [name stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    NSURL *search_url = [NSURL URLWithString:
+                         [NSString stringWithFormat:@"%@/search/series?name=%@",
+                          api_url, encodedName]];
+    NSArray *ret = [self queryDB:search_url];
+
+    // We know the array entries are dictionaries, so we cast it
+    NSDictionary *series = ret[0];
+
+    return series[@"id"];
 }
 
 - (NSArray *)getSeriesArtwork:(NSString *)series_id
@@ -113,39 +125,39 @@ NSString *api_token = nil;
     NSURL *search_url = [NSURL URLWithString:
                          [NSString stringWithFormat:@"%@/series/%@/images/query?keyType=series",
                           api_url, series_id]];
-    NSDictionary *resultJson = [self makeJsonRequest:search_url withMethod:@"GET"];
 
-    if (!resultJson) {
-        return nil;
-    }
-    if (!resultJson[@"data"]) {
-        return nil;
-    }
-    if (![resultJson[@"data"] isKindOfClass:[NSArray class]]) {
-        return nil;
-    }
-
-    return resultJson[@"data"];
+    return [self queryDB:search_url];
 }
 
-- (NSDictionary *)queryEpisodeForSeries:(NSString *)series_id withSeason:(NSString *)season withEpisode:(NSString *)episode
+- (NSDictionary *)getSeriesInfo:(NSString *)series_id
+{
+    NSURL *search_url = [NSURL URLWithString:
+                         [NSString stringWithFormat:@"%@/series/%@",
+                          api_url, series_id]];
+    NSArray *ret = [self queryDB:search_url];
+
+    return ret[0];
+}
+
+- (NSArray *)getSeriesActors:(NSString *)series_id
+{
+    NSURL *search_url = [NSURL URLWithString:
+                         [NSString stringWithFormat:@"%@/series/%@/actors",
+                          api_url, series_id]];
+
+    return [self queryDB:search_url];
+}
+
+- (NSDictionary *)queryEpisodeForSeries:(NSString *)series_id
+                             withSeason:(NSString *)season
+                            withEpisode:(NSString *)episode
 {
     NSURL *search_url = [NSURL URLWithString:
                          [NSString stringWithFormat:@"%@/series/%@/episodes/query?airedSeason=%@&airedEpisode=%@",
                           api_url, series_id, season, episode]];
-    NSDictionary *resultJson = [self makeJsonRequest:search_url withMethod:@"GET"];
+    NSArray *ret = [self queryDB:search_url];
 
-    if (!resultJson) {
-        return nil;
-    }
-    if (!resultJson[@"data"]) {
-        return nil;
-    }
-    if (![resultJson[@"data"] isKindOfClass:[NSArray class]]) {
-        return nil;
-    }
-
-    return resultJson[@"data"][0];
+    return ret[0];
 }
 
 
