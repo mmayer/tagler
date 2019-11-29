@@ -179,20 +179,31 @@ NSString *api_token = nil;
     return nil;
 }
 
+// http://thetvdb.com/api/3498815BE9484A62/series/328724/all/en.xml
+
 - (NSArray<SBMetadataResult *> *)searchTVSeries:(NSString *)aSeriesName
                                        language:(NSString *)aLanguage
                                       seasonNum:(NSString *)aSeasonNum
                                      episodeNum:(NSString *)aEpisodeNum
 {
     NSString *series_id = [self getSeriesID:aSeriesName];
-    NSDictionary *seriesData = [self queryEpisodeForSeries:series_id
+    NSDictionary *episodeData = [self queryEpisodeForSeries:series_id
                                                 withSeason:aSeasonNum
                                                withEpisode:aEpisodeNum];
     NSArray *seriesArtwork = [self getSeriesArtwork:series_id];
+    NSDictionary *seriesInfo = [self getSeriesInfo:series_id];
+    NSArray *seriesActors = [self getSeriesActors:series_id];
+//    NSMutableArray *results;
 
-    NSLog(@"%@\n", seriesData[@"episodeName"]);
-    NSLog(@"%@\n", seriesData[@"overview"]);
-    NSLog(@"%@\n", seriesArtwork);
+    if (!episodeData)
+        return nil;
+
+//    results = [[NSMutableArray alloc] init];
+
+    [SBTheTVDB2 metadataForEpisode:episodeData
+                            series:seriesInfo
+                            actors:seriesActors
+                           artwork:seriesArtwork];
 
     return nil;
 }
@@ -210,10 +221,97 @@ NSString *api_token = nil;
     return nil;
 }
 
-+ (SBMetadataResult *)metadataForEpisode:(NSDictionary *)aEpisode series:(NSDictionary *)aSeries
++ (SBMetadataResult *)metadataForEpisode:(NSDictionary *)aEpisode
+                                  series:(NSDictionary *)aSeries
+                                  actors:(NSArray *)aActors
+                                 artwork:(NSArray *)aArtwork
 {
-    NSLog(@"%s\n", __func__);
-    return nil;
+    SBMetadataResult *metadata = [[SBMetadataResult alloc] init];
+
+    metadata.mediaKind = 10; // TV show
+
+    // TV Show
+    metadata[@"TheTVDB Series ID"]              = aSeries[@"id"];
+    metadata[SBMetadataResultSeriesName]        = aSeries[@"seriesName"];
+    metadata[SBMetadataResultSeriesDescription] = aSeries[@"overview"];
+
+    // Episode
+    metadata[SBMetadataResultName]            = aEpisode[@"episodeName"];
+    metadata[SBMetadataResultReleaseDate]     = aEpisode[@"firstAired"];
+    metadata[SBMetadataResultDescription]     = aEpisode[@"overview"];
+    metadata[SBMetadataResultLongDescription] = aEpisode[@"overview"];
+
+#if 0
+    // TV Show
+    metadata[@"TheTVDB Series ID"]              = [aSeries retrieveForPath:@"id.text"];
+    metadata[SBMetadataResultSeriesName]        = [aSeries retrieveForPath:@"SeriesName.text"];
+    metadata[SBMetadataResultSeriesDescription] = [aSeries retrieveForPath:@"Overview.text"];
+    metadata[SBMetadataResultGenre]             = [SBTheTVDB cleanPeopleList:[aSeries retrieveForPath:@"Genre.text"]];
+
+    // Episode
+    metadata[SBMetadataResultName]            = [aEpisode retrieveForPath:@"EpisodeName.text"];
+    metadata[SBMetadataResultReleaseDate]     = [aEpisode retrieveForPath:@"FirstAired.text"];
+    metadata[SBMetadataResultDescription]     = [aEpisode retrieveForPath:@"Overview.text"];
+    metadata[SBMetadataResultLongDescription] = [aEpisode retrieveForPath:@"Overview.text"];
+
+    NSString *ratingString = [aSeries retrieveForPath:@"ContentRating.text"];
+    if (ratingString.length) {
+        metadata[SBMetadataResultRating] = [[MP42Ratings defaultManager] ratingStringForiTunesCountry:@"USA"
+                                                                                    media:@"TV"
+                                                                             ratingString:ratingString];
+    }
+
+    metadata[SBMetadataResultNetwork] = [aSeries retrieveForPath:@"Network.text"];
+    metadata[SBMetadataResultSeason]  = [aEpisode retrieveForPath:@"SeasonNumber.text"];
+
+    NSString *episodeID = [NSString stringWithFormat:@"%d%02d",
+                            [[aEpisode retrieveForPath:@"SeasonNumber.text"] intValue],
+                            [[aEpisode retrieveForPath:@"EpisodeNumber.text"] intValue]];
+
+    metadata[SBMetadataResultEpisodeID]     = episodeID;
+    metadata[SBMetadataResultEpisodeNumber] = [aEpisode retrieveForPath:@"EpisodeNumber.text"];
+    metadata[SBMetadataResultTrackNumber]   = [aEpisode retrieveForPath:@"EpisodeNumber.text"];
+
+    metadata[SBMetadataResultDirector]      = [SBTheTVDB cleanPeopleList:[aEpisode retrieveForPath:@"Director.text"]];
+    metadata[SBMetadataResultScreenwriters] = [SBTheTVDB cleanPeopleList:[aEpisode retrieveForPath:@"Writer.text"]];
+
+    // Cast
+    NSString *actors = [SBTheTVDB cleanPeopleList:[aSeries retrieveForPath:@"Actors.text"]];
+    NSString *gueststars = [SBTheTVDB cleanPeopleList:[aEpisode retrieveForPath:@"GuestStars.text"]];
+    if (actors.length) {
+        if (gueststars.length) {
+            metadata[SBMetadataResultCast] = [NSString stringWithFormat:@"%@, %@", actors, gueststars];
+        }
+        else {
+            metadata[SBMetadataResultCast] = actors;
+        }
+    } else {
+        if (gueststars.length) {
+            metadata[SBMetadataResultCast] = gueststars;
+        }
+    }
+
+    // Artwork
+    NSMutableArray *artworkThumbURLs = [NSMutableArray array];
+    NSMutableArray *artworkFullsizeURLs = [NSMutableArray array];
+    NSMutableArray *artworkProviderNames = [NSMutableArray array];
+
+    if ([aEpisode retrieveForPath:@"filename.text"]) {
+        NSURL *u = [NSURL URLWithString:[NSString stringWithFormat:@"http://thetvdb.com/banners/%@", [aEpisode retrieveForPath:@"filename.text"]]];
+        [artworkThumbURLs addObject:u];
+        [artworkFullsizeURLs addObject:u];
+        [artworkProviderNames addObject:@"TheTVDB|episode"];
+    }
+
+    metadata.artworkThumbURLs = artworkThumbURLs;
+    metadata.artworkFullsizeURLs = artworkFullsizeURLs;
+    metadata.artworkProviderNames = artworkProviderNames;
+
+    // TheTVDB does not provide the following fields normally associated with TV shows in SBMetadataResult:
+    // "Copyright", "Comments", "Producers", "Artist"
+#endif
+
+    return metadata;
 }
 
 @end
