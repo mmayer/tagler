@@ -56,6 +56,31 @@ NSString *const SBMetadataResultNetwork = @"{Network}";
     return self;
 }
 
+- (NSString *)description
+{
+    NSArray *keys;
+    BOOL isTVShow = (_tags[SBMetadataResultSeriesName] != nil);
+    NSMutableString *desc = [[NSMutableString alloc] init];
+
+    if (isTVShow) {
+        keys = [SBMetadataResult tvShowKeys];
+    } else {
+        keys = [SBMetadataResult movieKeys];
+    }
+
+    [desc appendString:@"<\n"];
+    [desc appendString:[NSString stringWithFormat:@"    isTVShow: %d\n",
+        isTVShow]];
+
+    for (NSString *key in keys) {
+        [desc appendString:[NSString stringWithFormat:@"    %@: %@\n",
+            key, _tags[key]]];
+    }
+    [desc appendString:@">"];
+
+    return desc;
+}
+
 + (NSArray<NSString *> *)movieKeys
 {
     return @[SBMetadataResultName,
