@@ -15,8 +15,9 @@
 #import "SBiTunesStore.h"
 
 #define API_URL @"https://api.thetvdb.com"
-
 #define API_KEY @"90195A61A24B686F"
+
+#define BANNER_URL @"http://thetvdb.com/banners/"
 
 static NSArray<NSString *> *TVDBlanguages;
 
@@ -24,8 +25,9 @@ static NSArray<NSString *> *TVDBlanguages;
 
 NSString *api_url = API_URL;
 NSString *api_key = API_KEY;
-
 NSString *api_token = nil;
+
+NSString *banner_url = BANNER_URL;
 
 + (void)initialize
 {
@@ -34,7 +36,21 @@ NSString *api_token = nil;
     }
 }
 
-- (NSDictionary *)makeJsonRequest:(NSURL *)url withMethod:(NSString *)method withParams:(NSDictionary *)params
++ (NSString *)createList:(NSArray *)source usingField:(NSString *)field separatedBy:(NSString *)sep
+{
+    NSMutableString *s = [[NSMutableString alloc] init];
+
+    for (NSDictionary *entry in source) {
+        if ([s length] > 0) {
+            [s appendString:sep];
+        }
+        [s appendString:entry[field]];
+    }
+
+    return s;
+}
+
++ (NSDictionary *)makeJsonRequest:(NSURL *)url withMethod:(NSString *)method withParams:(NSDictionary *)params
 {
     NSURLResponse *response;
     NSDictionary *resultJson;
@@ -193,26 +209,24 @@ NSString *api_token = nil;
     NSArray *seriesArtwork = [self getSeriesArtwork:series_id];
     NSDictionary *seriesInfo = [self getSeriesInfo:series_id];
     NSArray *seriesActors = [self getSeriesActors:series_id];
-//    NSMutableArray *results;
+    SBMetadataResult *meta;
 
     if (!episodeData)
         return nil;
 
-//    results = [[NSMutableArray alloc] init];
-
-    [SBTheTVDB2 metadataForEpisode:episodeData
+    meta = [SBTheTVDB2 metadataForEpisode:episodeData
                             series:seriesInfo
                             actors:seriesActors
                            artwork:seriesArtwork];
 
-    return nil;
+    return @[ meta ];
 }
 
 - (SBMetadataResult *)loadTVMetadata:(SBMetadataResult *)aMetadata
                             language:(NSString *)aLanguage
 {
     NSLog(@"%s\n", __func__);
-    return nil;
+    return aMetadata;
 }
 
 + (NSString *)cleanPeopleList:(NSString *)s
@@ -234,12 +248,59 @@ NSString *api_token = nil;
     metadata[@"TheTVDB Series ID"]              = aSeries[@"id"];
     metadata[SBMetadataResultSeriesName]        = aSeries[@"seriesName"];
     metadata[SBMetadataResultSeriesDescription] = aSeries[@"overview"];
+    metadata[SBMetadataResultGenre]             = [aSeries[@"genre"] componentsJoinedByString:@", "];
 
     // Episode
     metadata[SBMetadataResultName]            = aEpisode[@"episodeName"];
     metadata[SBMetadataResultReleaseDate]     = aEpisode[@"firstAired"];
     metadata[SBMetadataResultDescription]     = aEpisode[@"overview"];
     metadata[SBMetadataResultLongDescription] = aEpisode[@"overview"];
+
+    NSString *ratingString = aSeries[@"rating"];
+    if (ratingString.length) {
+        metadata[SBMetadataResultRating] = [[MP42Ratings defaultManager]
+                                            ratingStringForiTunesCountry:@"USA"
+                                            media:@"TV" ratingString:ratingString];
+    }
+
+    metadata[SBMetadataResultNetwork] = aSeries[@"network"];
+    metadata[SBMetadataResultSeason]  = aEpisode[@"airedSeason"];
+
+    NSString *episodeID = [NSString stringWithFormat:@"%d%02d",
+                            [aEpisode[@"airedSeason"] intValue],
+                            [aEpisode[@"airedEpisodeNumber"] intValue]];
+
+    metadata[SBMetadataResultEpisodeID]     = episodeID;
+    metadata[SBMetadataResultEpisodeNumber] = aEpisode[@"airedEpisodeNumber"];
+    metadata[SBMetadataResultTrackNumber]   = aEpisode[@"airedEpisodeNumber"];
+
+    metadata[SBMetadataResultDirector]      = [aEpisode[@"directors"] componentsJoinedByString:@", "];
+    metadata[SBMetadataResultScreenwriters] = [aEpisode[@"writers"] componentsJoinedByString:@", "];
+
+    NSString *actorList = [SBTheTVDB2 createList:aActors usingField:@"name" separatedBy:@", "];
+    metadata[SBMetadataResultCast] = actorList;
+
+    // Artwork
+    NSMutableArray *artworkThumbURLs = [NSMutableArray array];
+    NSMutableArray *artworkFullsizeURLs = [NSMutableArray array];
+    NSMutableArray *artworkProviderNames = [NSMutableArray array];
+
+    if (aEpisode[@"filename"]) {
+        NSURL *u = [NSURL URLWithString:[banner_url stringByAppendingString:aEpisode[@"filename"]]];
+        [artworkThumbURLs addObject:u];
+        [artworkFullsizeURLs addObject:u];
+        [artworkProviderNames addObject:@"TheTVDB|episode"];
+    }
+    metadata.artworkThumbURLs = artworkThumbURLs;
+    metadata.artworkFullsizeURLs = artworkFullsizeURLs;
+    metadata.artworkProviderNames = artworkProviderNames;
+
+//NSLog(@"series=%@\n", aSeries);
+//NSLog(@"episode=%@\n", aEpisode);
+//NSLog(@"actors=%@\n", aActors);
+//NSLog(@"artwork=%@\n", aArtwork);
+
+//NSLog(@"%@\n", artworkFullsizeURLs);
 
 #if 0
     // TV Show
