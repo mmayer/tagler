@@ -21,12 +21,12 @@
 
 static NSArray<NSString *> *TVDBlanguages;
 
-@implementation SBTheTVDB2
+@implementation SBTheTVDB2 {
+    NSString *api_token;
+}
 
 NSString *api_url = API_URL;
 NSString *api_key = API_KEY;
-NSString *api_token = nil;
-
 NSString *banner_url = BANNER_URL;
 
 + (void)initialize
@@ -50,7 +50,7 @@ NSString *banner_url = BANNER_URL;
     return s;
 }
 
-+ (NSDictionary *)makeJsonRequest:(NSURL *)url withMethod:(NSString *)method withParams:(NSDictionary *)params
+- (NSDictionary *)makeJsonRequest:(NSURL *)url withMethod:(NSString *)method withParams:(NSDictionary *)params
 {
     NSURLResponse *response;
     NSDictionary *resultJson;
