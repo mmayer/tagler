@@ -202,4 +202,14 @@
     return returnArray;
 }
 
+- (NSArray<SBMetadataResult *> *)searchTVSeries:(NSString *)aSeriesName language:(NSString *)aLanguage
+{
+    return nil;
+}
+
+- (NSArray<SBMetadataResult *> *)searchTVSeries:(NSString *)aSeriesName language:(NSString *)aLanguage seasonNum:(NSString *)aSeasonNum episodeNum:(NSString *)aEpisodeNum
+{
+    return nil;
+}
+
 @end

@@ -277,4 +277,9 @@ static NSArray<NSString *> *TVDBlanguages;
 	return metadata;
 }
 
+- (NSArray<SBMetadataResult *> *)searchMovie:(NSString *)aMovieTitle language:(NSString *)aLanguage
+{
+    return nil;
+}
+
 @end

@@ -375,4 +375,9 @@ NSString *banner_url = BANNER_URL;
     return metadata;
 }
 
+- (NSArray<SBMetadataResult *> *)searchMovie:(NSString *)aMovieTitle language:(NSString *)aLanguage
+{
+    return nil;
+}
+
 @end
