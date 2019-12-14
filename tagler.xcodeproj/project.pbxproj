@@ -166,11 +166,11 @@
 			};
 			buildConfigurationList = 28249A0C1C74F07400B0C1E5 /* Build configuration list for PBXProject "tagler" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				English,
 				en,
+				Base,
 			);
 			mainGroup = 28249A081C74F07400B0C1E5;
 			productRefGroup = 28249A121C74F07400B0C1E5 /* Products */;
