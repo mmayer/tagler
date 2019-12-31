@@ -50,6 +50,37 @@ NSString *banner_url = BANNER_URL;
     return s;
 }
 
++ (NSArray *)getArtworkProvider:(NSArray *)artwork
+{
+    NSMutableArray *result = nil;
+
+    for (NSDictionary *a in artwork) {
+        NSString *provider = [NSString stringWithFormat:@"TheTVDB|%@", a[@"keyType"]];
+        if (!result) {
+            result = [[NSMutableArray alloc] init];
+        }
+        [result addObject:provider];
+    }
+    return result;
+}
+
++ (NSArray *)getArtworkURL:(NSArray *)artwork withKey:(NSString *)key
+{
+    NSMutableArray *result = nil;
+
+    for (NSDictionary *a in artwork) {
+        NSString *path = a[key];
+        if (path) {
+            NSURL *url = [NSURL URLWithString:[banner_url stringByAppendingString:path]];
+            if (!result) {
+                result = [[NSMutableArray alloc] init];
+            }
+            [result addObject:url];
+        }
+    }
+    return result;
+}
+
 - (NSDictionary *)makeJsonRequest:(NSURL *)url withMethod:(NSString *)method withParams:(NSDictionary *)params
 {
     NSURLResponse *response;
@@ -136,13 +167,35 @@ NSString *banner_url = BANNER_URL;
     return series[@"id"];
 }
 
-- (NSArray *)getSeriesArtwork:(NSString *)series_id
+- (NSArray *)getArtwork:(NSString *)series_id withKey:(NSString *)key withSubKey:(NSString *)subKey
 {
-    NSURL *search_url = [NSURL URLWithString:
-                         [NSString stringWithFormat:@"%@/series/%@/images/query?keyType=series",
-                          api_url, series_id]];
+    NSURL *search_url;
+    NSString *base_url_str = [NSString stringWithFormat:@"%@/series/%@/images/query?keyType=%@",
+                       api_url, series_id, key];
+    NSString *url_str = base_url_str;
+
+    if (subKey) {
+        url_str = [NSString stringWithFormat:@"%@&subKey=%@", base_url_str, subKey];
+    }
+
+    search_url = [NSURL URLWithString:url_str];
 
     return [self queryDB:search_url];
+}
+
+- (NSArray *)getArtwork:(NSString *)series_id withKey:(NSString *)key
+{
+    return [self getArtwork:series_id withKey:key withSubKey:nil];
+}
+
+- (NSArray *)getPosterArtwork:(NSString *)series_id ofSeason:(NSString *)season
+{
+    return [self getArtwork:series_id withKey:@"poster"];
+}
+
+- (NSArray *)getSeriesArtwork:(NSString *)series_id ofSeason:(NSString *)season
+{
+    return [self getArtwork:series_id withKey:@"season" withSubKey:season];
 }
 
 - (NSDictionary *)getSeriesInfo:(NSString *)series_id
@@ -206,7 +259,6 @@ NSString *banner_url = BANNER_URL;
     NSDictionary *episodeData = [self queryEpisodeForSeries:series_id
                                                 withSeason:aSeasonNum
                                                withEpisode:aEpisodeNum];
-    NSArray *seriesArtwork = [self getSeriesArtwork:series_id];
     NSDictionary *seriesInfo = [self getSeriesInfo:series_id];
     NSArray *seriesActors = [self getSeriesActors:series_id];
     SBMetadataResult *meta;
@@ -216,8 +268,7 @@ NSString *banner_url = BANNER_URL;
 
     meta = [SBTheTVDB2 metadataForEpisode:episodeData
                             series:seriesInfo
-                            actors:seriesActors
-                           artwork:seriesArtwork];
+                            actors:seriesActors];
 
     return @[ meta ];
 }
@@ -225,7 +276,64 @@ NSString *banner_url = BANNER_URL;
 - (SBMetadataResult *)loadTVMetadata:(SBMetadataResult *)aMetadata
                             language:(NSString *)aLanguage
 {
-    NSLog(@"%s\n", __func__);
+    NSString *seriesID = aMetadata[@"TheTVDB Series ID"];
+    NSString *seasonNum = aMetadata[SBMetadataResultSeason];
+    // Query TheTVDB for Artwork
+    NSArray *seriesArtwork = [self getSeriesArtwork:seriesID
+                                           ofSeason:seasonNum];
+    NSArray *posterArtwork = [self getPosterArtwork:seriesID
+                                           ofSeason:seasonNum];
+    NSArray *combinedArtwork = [seriesArtwork arrayByAddingObjectsFromArray:posterArtwork];
+    // Obtain URLs for TheTVDB Artwork
+    NSArray *dbArtworkTURLs = [SBTheTVDB2 getArtworkURL:combinedArtwork
+                                                withKey:@"thumbnail"];
+    NSArray *dbArtworkURLs = [SBTheTVDB2 getArtworkURL:combinedArtwork
+                                               withKey:@"fileName"];
+    NSArray *dbArtworkProvider = [SBTheTVDB2 getArtworkProvider:combinedArtwork];
+    // Episode Artwork (added by +metadataForEpisode)
+    NSArray *epArtworkTURLs = aMetadata.artworkThumbURLs;
+    NSArray *epArtworkURLs = aMetadata.artworkFullsizeURLs;
+    NSArray *epArtworkProviders = aMetadata.artworkProviderNames;
+    // add iTunes artwork
+    SBMetadataResult *iTunesMetadata =
+        [SBiTunesStore quickiTunesSearchTV:aMetadata[SBMetadataResultSeriesName]
+                              episodeTitle:aMetadata[SBMetadataResultName]];
+    NSArray *itArtworkTURLs = iTunesMetadata.artworkThumbURLs;
+    NSArray *itArtworkURLs = iTunesMetadata.artworkFullsizeURLs;
+    NSArray *itArtworkProviders = iTunesMetadata.artworkProviderNames;
+    // All addwork is joined in these arrays in the desired order
+    NSMutableArray *newArtworkThumbURLs = [NSMutableArray array];
+    NSMutableArray *newArtworkFullsizeURLs = [NSMutableArray array];
+    NSMutableArray *newArtworkProviderNames = [NSMutableArray array];
+
+//NSLog(@"iTunesMetadata=%@\n", iTunesMetadata);
+//NSLog(@"name=%@ / %@\n", aMetadata[SBMetadataResultSeriesName], aMetadata[SBMetadataResultName]);
+
+    // Episode artwork goes into our new array first
+    [newArtworkThumbURLs addObjectsFromArray:epArtworkTURLs];
+    [newArtworkFullsizeURLs addObjectsFromArray:epArtworkURLs];
+    [newArtworkProviderNames addObjectsFromArray:epArtworkProviders];
+
+    // iTunes artwork comes second, provided it exists
+    if (itArtworkTURLs && itArtworkURLs &&
+        (itArtworkTURLs.count == itArtworkURLs.count)) {
+            [newArtworkThumbURLs addObjectsFromArray:itArtworkTURLs];
+            [newArtworkFullsizeURLs addObjectsFromArray:itArtworkURLs];
+            [newArtworkProviderNames addObjectsFromArray:itArtworkProviders];
+
+    }
+
+    // Lastly, TheTVDB artwork follows
+    [newArtworkThumbURLs addObjectsFromArray:dbArtworkTURLs];
+    [newArtworkFullsizeURLs addObjectsFromArray:dbArtworkURLs];
+    [newArtworkProviderNames addObjectsFromArray:dbArtworkProvider];
+
+//NSLog(@"Artwork: %@\n", newArtworkFullsizeURLs);
+
+    aMetadata.artworkThumbURLs = newArtworkThumbURLs;
+    aMetadata.artworkFullsizeURLs = newArtworkFullsizeURLs;
+    aMetadata.artworkProviderNames = newArtworkProviderNames;
+
     return aMetadata;
 }
 
@@ -238,7 +346,6 @@ NSString *banner_url = BANNER_URL;
 + (SBMetadataResult *)metadataForEpisode:(NSDictionary *)aEpisode
                                   series:(NSDictionary *)aSeries
                                   actors:(NSArray *)aActors
-                                 artwork:(NSArray *)aArtwork
 {
     SBMetadataResult *metadata = [[SBMetadataResult alloc] init];
 
@@ -280,17 +387,18 @@ NSString *banner_url = BANNER_URL;
     NSString *actorList = [SBTheTVDB2 createList:aActors usingField:@"name" separatedBy:@", "];
     metadata[SBMetadataResultCast] = actorList;
 
-    // Artwork
     NSMutableArray *artworkThumbURLs = [NSMutableArray array];
     NSMutableArray *artworkFullsizeURLs = [NSMutableArray array];
     NSMutableArray *artworkProviderNames = [NSMutableArray array];
 
+    // Insert episode artwork as the first artwork
     if (aEpisode[@"filename"]) {
         NSURL *u = [NSURL URLWithString:[banner_url stringByAppendingString:aEpisode[@"filename"]]];
         [artworkThumbURLs addObject:u];
         [artworkFullsizeURLs addObject:u];
         [artworkProviderNames addObject:@"TheTVDB|episode"];
     }
+
     metadata.artworkThumbURLs = artworkThumbURLs;
     metadata.artworkFullsizeURLs = artworkFullsizeURLs;
     metadata.artworkProviderNames = artworkProviderNames;
