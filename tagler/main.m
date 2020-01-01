@@ -274,16 +274,22 @@ int process_file(const char * const fname, const char *provider,
         return -1;
     }
 
-    if (image_index >= m.artworkFullsizeURLs.count) {
+    if (image_index >= (int)m.artworkFullsizeURLs.count) {
         image_index = (int)m.artworkFullsizeURLs.count - 1;
     }
 
-    verb_printf(1, verbose, "Image #: %d\n", image_index);
-    if (verbose > 1) {
-        for (int i = 0; i < m.artworkFullsizeURLs.count; i++) {
-            printf("Image URL #%3d: %s\n", i,
-                [[m.artworkFullsizeURLs[i] absoluteString] UTF8String]);
+    if (image_index >= 0) {
+        verb_printf(1, verbose, "Image #: %d\n", image_index);
+        if (verbose > 1) {
+            for (int i = 0; i < m.artworkFullsizeURLs.count; i++) {
+                printf("Image URL #%3d: %s\n", i,
+                    [[m.artworkFullsizeURLs[i] absoluteString] UTF8String]);
+            }
         }
+    }
+
+    if (image) {
+        verb_printf(1, verbose, "Image: %s\n", image);
     }
 
     if (!isMovie && total_tracks > 0) {
