@@ -76,16 +76,13 @@ MP42File *open_mp42(const char * const fname, NSURL **url)
     return mp4File;
 }
 
-int read_file(const char * const fname)
+void close_mp42(const MP42File *mp4)
 {
-    MP42File *mp4File = open_mp42(fname, NULL);
-    MP42Metadata *metadata;
+    [mp4 dealloc];
+}
 
-    if (!mp4File) {
-        fprintf(stderr, "%s: couldn't open %s\n", prg, fname);
-        return -1;
-    }
-    metadata = [mp4File metadata];
+void print_metadata(const MP42Metadata *metadata)
+{
     printf("mediaKind: %s (%d)\n"
            "hdVideo: %s (%d)\n",
            media_kind_list[metadata.mediaKind],
@@ -105,8 +102,21 @@ int read_file(const char * const fname)
         }
         printf("%s: %s\n", [key UTF8String], value);
     }
+}
 
-    return 0;
+MP42Metadata *read_file(const char * const fname)
+{
+    MP42File *mp4File = open_mp42(fname, NULL);
+    MP42Metadata *metadata;
+
+    if (!mp4File) {
+        fprintf(stderr, "%s: couldn't open %s\n", prg, fname);
+        return NULL;
+    }
+
+    metadata = [mp4File metadata];
+
+    return metadata;
 }
 
 int extract_artwork(const char * const fname)
@@ -539,7 +549,12 @@ int tagler_main(int argc, char * const argv[])
 
     for (i = optind; i < argc; i++) {
         if (read_mode) {
-            ret = read_file(argv[i]);
+            MP42Metadata *m = read_file(argv[i]);
+            if (m) {
+                print_metadata(m);
+            } else {
+                ret = -1;
+            }
         } else if (extract_mode) {
             ret = extract_artwork(argv[i]);
         } else {
