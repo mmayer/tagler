@@ -52,7 +52,12 @@ extern NSString *const SBMetadataResultNetwork;
 + (NSArray<NSString *> *)movieKeys;
 + (NSArray<NSString *> *)tvShowKeys;
 
+- (instancetype)initWithDict:(NSDictionary *)dict;
+- (instancetype)initFromJSONFile:(NSString *)fileName;
+
 - (NSString *)description;
+- (NSDictionary *)dictRepresentation;
+- (int)exportJSONToFile:(NSString *)fileName;
 
 - (void)merge:(SBMetadataResult *)aObject;
 

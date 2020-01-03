@@ -56,6 +56,35 @@ NSString *const SBMetadataResultNetwork = @"{Network}";
     return self;
 }
 
+- (instancetype)initWithDict:(NSDictionary *)dict
+{
+    if (!(self = [super init])) {
+        return nil;
+    }
+
+    _tags = [dict[@"Tags"] mutableCopy];
+
+    _artworkFullsizeURLs = [dict[@"Artwork"][@"FullsizeURLs"] mutableCopy];
+    _artworkThumbURLs = [dict[@"Artwork"][@"ThumbURLs"] mutableCopy];
+    _artworkProviderNames = [dict[@"Artwork"][@"Providers"] mutableCopy];
+
+    return self;
+}
+
+- (instancetype)initFromJSONFile:(NSString *)fileName
+{
+    NSError *error = nil;
+    NSData *contents = [NSData dataWithContentsOfFile:fileName];
+    NSDictionary *jsonMeta = [NSJSONSerialization JSONObjectWithData:contents
+                                                             options:kNilOptions
+                                                               error:&error];
+    if (error) {
+        return nil;
+    }
+
+    return [self initWithDict:jsonMeta];
+}
+
 - (NSString *)description
 {
     NSArray *keys;
@@ -134,6 +163,17 @@ NSString *const SBMetadataResultNetwork = @"{Network}";
              SBMetadataResultITunesCountry];
 }
 
++ (NSArray<NSString *> *)artworkURLStrings:(NSArray<NSURL *> *)artworkURL
+{
+    NSMutableArray *arr = [[NSMutableArray alloc] init];
+
+    for (NSURL *u in artworkURL) {
+        [arr addObject:[u absoluteString]];
+    }
+
+    return arr;
+}
+
 - (void)merge:(SBMetadataResult *)metadata
 {
     [_tags addEntriesFromDictionary:metadata.tags];
@@ -169,6 +209,41 @@ NSString *const SBMetadataResultNetwork = @"{Network}";
     else {
         [self setTag:obj forKey:key];
     }
+}
+
+- (NSDictionary *)dictRepresentation
+{
+    NSMutableDictionary *allArtwork = [NSMutableDictionary dictionary];
+    NSMutableDictionary *allMetaData = [NSMutableDictionary dictionary];
+    // To serialize to JSON, we can't use NSURL * objects. Convert NSURL *
+    // arrays into arrays of NSString *.
+    NSArray *artwork = [SBMetadataResult artworkURLStrings:_artworkFullsizeURLs];
+    NSArray *thumbs = [SBMetadataResult artworkURLStrings:_artworkThumbURLs];
+
+    // Create an artwork dictionary containing the three artwork arrays
+    [allArtwork setObject:artwork forKey:@"FullsizeURLs"];
+    [allArtwork setObject:thumbs forKey:@"ThumbURLs"];
+    [allArtwork setObject:_artworkProviderNames forKey:@"Providers"];
+
+    // The top-level dictionary contains tags and artwork underneath
+    [allMetaData setObject:_tags forKey:@"Tags"];
+    [allMetaData setObject:allArtwork forKey:@"Artwork"];
+
+    return allMetaData;
+}
+
+- (int)exportJSONToFile:(NSString *)fileName
+{
+    NSError *error = nil;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:[self dictRepresentation]
+                                                       options:NSJSONWritingPrettyPrinted
+                                                         error:&error];
+    NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+
+    [jsonString writeToFile:fileName atomically:NO encoding:NSUTF8StringEncoding error:&error];
+    [jsonString release];
+
+    return (error) ? (int)error.code : 0;
 }
 
 - (MP42Metadata *)metadataUsingMap:(SBMetadataResultMap *)map keepEmptyKeys:(BOOL)keep
