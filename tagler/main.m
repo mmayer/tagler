@@ -162,6 +162,109 @@ int extract_artwork(const char * const fname)
     return 0;
 }
 
+int write_to_mp4(const char * const fname, SBMetadataResult *m, int image_index,
+                 const char *image, BOOL is_movie, BOOL preserve)
+{
+    SBMetadataResultMap *resultMap;
+    NSData *artworkData = nil;
+    NSError *error = nil;
+    NSFileManager *filemgr = [[NSFileManager alloc] init];
+    NSString *currentPath = [NSString stringWithFormat:@"%@/", [filemgr
+        currentDirectoryPath]];
+
+    if (is_movie) {
+        resultMap = [SBMetadataResultMap movieDefaultMap];
+    } else {
+        resultMap = [SBMetadataResultMap tvShowDefaultMap];
+    }
+
+    if (image) {
+        NSString *imageAsURL = [[NSString stringWithFormat:@"file://%@%s",
+            (image[0] == '/') ? @"" : currentPath, image]
+            stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+        NSURL *imageURL = [NSURL URLWithString:imageAsURL];
+        artworkData = [SBMetadataHelper downloadDataFromURL:imageURL
+            withCachePolicy:SBReloadIgnoringLocalCacheData];
+        if (!artworkData) {
+            printf("Couldn't load arwork from %s\n", image);
+        }
+    } else if (image_index >= 0) {
+        NSURL *artworkURL = m.artworkFullsizeURLs[image_index];
+        artworkData = [SBMetadataHelper downloadDataFromURL:artworkURL
+            withCachePolicy:SBDefaultPolicy];
+    } else {
+        printf("No artwork found!\n");
+    }
+    if (artworkData && artworkData.length) {
+        MP42Image *artwork = [[MP42Image alloc] initWithData:artworkData
+                                                        type:MP42_ART_JPEG];
+        if (artwork) {
+            [m.artworks addObject:artwork];
+        }
+    }
+
+    NSMutableDictionary<NSString *, id> *fileAttributes =
+        [NSMutableDictionary dictionary];
+    MP42Metadata *meta = [m metadataUsingMap:resultMap keepEmptyKeys:NO];
+    NSURL *fileURL;
+    MP42File *mp4File = open_mp42(fname, &fileURL);
+    if (!mp4File) {
+        fprintf(stderr, "%s: couldn't open %s\n", prg, fname);
+        return -1;
+    }
+
+    [mp4File.metadata mergeMetadata:meta];
+
+    /*
+     * This has to come after merging the rest of the meta data. I found no
+     * way to set m.metadata.hdVideo, which would have allowed it to be merged
+     * like the rest. Even if I assigned a value to it, it stayed 0. So, we
+     * set it on the mp4File object directly instead, after merging.
+     */
+    for (MP42Track *track in mp4File.tracks) {
+        if ([track isKindOfClass:[MP42VideoTrack class]]) {
+            MP42VideoTrack *videoTrack = (MP42VideoTrack *)track;
+            int hdVideo = isHdVideo((uint64_t)videoTrack.trackWidth,
+                (uint64_t)videoTrack.trackHeight);
+            if (hdVideo) {
+                mp4File.metadata[@"HD Video"] = @(hdVideo);
+            }
+        }
+    }
+
+    unsigned long long originalFileSize =
+        [[[filemgr attributesOfItemAtPath:[fileURL path] error:nil]
+            valueForKey:NSFileSize] unsignedLongLongValue];
+    if (originalFileSize > ALMOST_4GiB) {
+        [fileAttributes setObject:@YES forKey:MP4264BitData];
+    }
+
+    struct stat st;
+    if (preserve) {
+        if (stat(fname, &st) < 0) {
+            fprintf(stderr, "%s: couldn't stat %s -- %s\n", prg, fname,
+                strerror(errno));
+            // We don't wan't to restore the timestamp if we couldn't read it.
+            preserve = FALSE;
+        }
+    }
+
+    [mp4File updateMP4FileWithOptions:fileAttributes error:&error];
+    if (preserve) {
+        struct utimbuf ut;
+
+        ut.actime = st.st_atime;
+        ut.modtime = st.st_mtime;
+        if (utime(fname, &ut) < 0) {
+            fprintf(stderr, "%s: couldn't restore timestamps -- %s\n", prg,
+                strerror(errno));
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 int process_file(const char * const fname, const char *provider,
     const char *new_genre, int total_tracks, int image_index, const char *image,
     const char *language, const char *track_title, int season, int episode,
@@ -171,7 +274,6 @@ int process_file(const char * const fname, const char *provider,
     SBMetadataImporter *searcher = nil;
     SBMetadataResultMap *resultMap;
     NSArray<SBMetadataResult *> *result;
-    NSError *error = nil;
     NSString *title = nil;
     NSString *seasonNum = nil;
     NSString *episodeNum = nil;
@@ -338,94 +440,7 @@ int process_file(const char * const fname, const char *provider,
             [m.tags[@"{Release Date}"] UTF8String]);
     }
 
-    NSData *artworkData = nil;
-    NSFileManager *filemgr = [[NSFileManager alloc] init];
-    NSString *currentPath = [NSString stringWithFormat:@"%@/", [filemgr
-        currentDirectoryPath]];
-
-    if (image) {
-        NSString *imageAsURL = [[NSString stringWithFormat:@"file://%@%s",
-            (image[0] == '/') ? @"" : currentPath, image]
-            stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-        NSURL *imageURL = [NSURL URLWithString:imageAsURL];
-        artworkData = [SBMetadataHelper downloadDataFromURL:imageURL
-            withCachePolicy:SBReloadIgnoringLocalCacheData];
-        if (!artworkData) {
-            printf("Couldn't load arwork from %s\n", image);
-        }
-    } else if (image_index >= 0) {
-        NSURL *artworkURL = m.artworkFullsizeURLs[image_index];
-        artworkData = [SBMetadataHelper downloadDataFromURL:artworkURL
-            withCachePolicy:SBDefaultPolicy];
-    } else {
-        printf("No artwork found!\n");
-    }
-    if (artworkData && artworkData.length) {
-        MP42Image *artwork = [[MP42Image alloc] initWithData:artworkData type:MP42_ART_JPEG];
-        if (artwork) {
-            [m.artworks addObject:artwork];
-        }
-    }
-
-    NSMutableDictionary<NSString *, id> *fileAttributes = [NSMutableDictionary dictionary];
-    MP42Metadata *meta = [m metadataUsingMap:resultMap keepEmptyKeys:NO];
-    NSURL *fileURL;
-    MP42File *mp4File = open_mp42(fname, &fileURL);
-    if (!mp4File) {
-        fprintf(stderr, "%s: couldn't open %s\n", prg, fname);
-        return -1;
-    }
-
-    [mp4File.metadata mergeMetadata:meta];
-
-    /*
-     * This has to come after merging the rest of the meta data. I found no
-     * way to set m.metadata.hdVideo, which would have allowed it to be merged
-     * like the rest. Even if I assigned a value to it, it stayed 0. So, we
-     * set it on the mp4File object directly instead, after merging.
-     */
-    for (MP42Track *track in mp4File.tracks) {
-        if ([track isKindOfClass:[MP42VideoTrack class]]) {
-            MP42VideoTrack *videoTrack = (MP42VideoTrack *)track;
-            int hdVideo = isHdVideo((uint64_t)videoTrack.trackWidth,
-                (uint64_t)videoTrack.trackHeight);
-            if (hdVideo) {
-                mp4File.metadata[@"HD Video"] = @(hdVideo);
-            }
-        }
-    }
-
-    unsigned long long originalFileSize =
-        [[[filemgr attributesOfItemAtPath:[fileURL path] error:nil]
-            valueForKey:NSFileSize] unsignedLongLongValue];
-    if (originalFileSize > ALMOST_4GiB) {
-        [fileAttributes setObject:@YES forKey:MP4264BitData];
-    }
-
-    struct stat st;
-    if (preserve) {
-        if (stat(fname, &st) < 0) {
-            fprintf(stderr, "%s: couldn't stat %s -- %s\n", prg, fname,
-                strerror(errno));
-            // We don't wan't to restore the timestamp if we couldn't read it.
-            preserve = FALSE;
-        }
-    }
-
-    [mp4File updateMP4FileWithOptions:fileAttributes error:&error];
-    if (preserve) {
-        struct utimbuf ut;
-
-        ut.actime = st.st_atime;
-        ut.modtime = st.st_mtime;
-        if (utime(fname, &ut) < 0) {
-            fprintf(stderr, "%s: couldn't restore timestamps -- %s\n", prg,
-                strerror(errno));
-            return -1;
-        }
-    }
-
-    return error ? -1 : 0;
+    return write_to_mp4(fname, m, image_index, image, isMovie, preserve);
 }
 
 int tagler_main(int argc, char * const argv[])
