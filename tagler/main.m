@@ -265,6 +265,15 @@ int write_to_mp4(const char * const fname, SBMetadataResult *m, int image_index,
     return 0;
 }
 
+SBMetadataResult *read_json(const char * const fname)
+{
+    NSString *fileName = [NSString stringWithCString:fname
+                                            encoding:NSUTF8StringEncoding];
+    SBMetadataResult *meta = [[SBMetadataResult alloc] initFromJSONFile:fileName];
+
+    return meta;
+}
+
 int process_file(const char * const fname, const char *provider,
     const char *new_genre, int total_tracks, int image_index, const char *image,
     const char *language, const char *track_title, int season, int episode,
@@ -454,6 +463,7 @@ int tagler_main(int argc, char * const argv[])
     int image_number = -1;
     int verbose = 0;
     BOOL preserve = FALSE;
+    BOOL read_JSON = FALSE;
     BOOL read_mode = FALSE;
     BOOL extract_mode = FALSE;
     char *genre = NULL;
@@ -461,9 +471,10 @@ int tagler_main(int argc, char * const argv[])
     char *search_provider = NULL;
     char *title = NULL;
     char *image = NULL;
+    char *json_file = NULL;
 
     prg = basename(argv[0]);
-    while ((ch = getopt(argc, argv, "EI:L:PT:e:hg:i:p:t:rs:v")) != -1) {
+    while ((ch = getopt(argc, argv, "EI:L:PR:T:e:hg:i:p:t:rs:v")) != -1) {
         switch (ch) {
             case 'E':
                 extract_mode = TRUE;
@@ -476,6 +487,10 @@ int tagler_main(int argc, char * const argv[])
                 break;
             case 'P':
                 preserve = TRUE;
+                break;
+            case 'R':
+                read_JSON = TRUE;
+                json_file = optarg;
                 break;
             case 'T':
                 tracks = (int)strtol(optarg, &errp, 10);
@@ -500,12 +515,13 @@ int tagler_main(int argc, char * const argv[])
                     "       -I<image-file>\n"
                     "       -L<language>\n"
                     "       -P (preserve timestamp)\n"
+                    "       -R<file> (read metadata from JSON file)\n"
                     "       -T<total-tracks-per-seasion#>\n"
                     "       -g<genre>\n"
                     "       -i<image#>\n"
                     "       -p<provider>\n"
                     "       -t<title>\n"
-                    "       -r (read metadata from file)\n"
+                    "       -r (read metadata from MP4 file)\n"
                     "       -s<season#>\n"
                     "       -v[v...] (verbose; more v's for more verbosity)\n"
                     "       -e<episode#>\n");
@@ -563,7 +579,15 @@ int tagler_main(int argc, char * const argv[])
     }
 
     for (i = optind; i < argc; i++) {
-        if (read_mode) {
+        if (read_JSON) {
+            SBMetadataResult *meta = read_json(json_file);
+            if (meta) {
+                ret = write_to_mp4(argv[i], meta, image_number, image, FALSE,
+                                   preserve);
+            } else {
+                ret = -1;
+            }
+        } else if (read_mode) {
             MP42Metadata *m = read_file(argv[i]);
             if (m) {
                 print_metadata(m);
