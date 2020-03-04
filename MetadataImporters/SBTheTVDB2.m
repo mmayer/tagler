@@ -387,7 +387,7 @@ NSString *banner_url = BANNER_URL;
     NSMutableArray *artworkProviderNames = [NSMutableArray array];
 
     // Insert episode artwork as the first artwork
-    if (aEpisode[@"filename"]) {
+    if (aEpisode[@"filename"] && ![aEpisode[@"filename"] isEqualTo:@""]) {
         NSURL *u = [NSURL URLWithString:[banner_url stringByAppendingString:aEpisode[@"filename"]]];
         [artworkThumbURLs addObject:u];
         [artworkFullsizeURLs addObject:u];
