@@ -99,12 +99,10 @@ NSString *const SBMetadataResultNetwork = @"{Network}";
     }
 
     [desc appendString:@"<\n"];
-    [desc appendString:[NSString stringWithFormat:@"    isTVShow: %d\n",
-        isTVShow]];
+    [desc appendFormat:@"    isTVShow: %d\n", isTVShow];
 
     for (NSString *key in keys) {
-        [desc appendString:[NSString stringWithFormat:@"    %@: %@\n",
-            key, _tags[key]]];
+        [desc appendFormat:@"    %@: %@\n", key, _tags[key]];
     }
     [desc appendString:@">"];
 
