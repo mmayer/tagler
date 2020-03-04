@@ -62,6 +62,7 @@ NSString *const SBMetadataResultNetwork = @"{Network}";
     }
 
     _tags = [dict[@"Tags"] mutableCopy];
+    _artworks = [NSMutableArray array];
     _artworkFullsizeURLs = [SBMetadataResult
                             artworkStringsToURLs:dict[@"Artwork"][@"FullsizeURLs"]];
     _artworkThumbURLs = [SBMetadataResult
