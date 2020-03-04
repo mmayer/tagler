@@ -19,7 +19,7 @@
 
 #define BANNER_URL @"http://thetvdb.com/banners/"
 
-static NSArray<NSString *> *TVDBlanguages;
+//static NSArray<NSString *> *TVDBlanguages;
 
 @implementation SBTheTVDB2 {
     NSString *api_token;
