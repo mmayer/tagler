@@ -578,6 +578,11 @@ int tagler_main(int argc, char * const argv[])
         return 1;
     }
 
+    // Default to the first image if none is given on the command line.
+    if (!image && image_number < 0) {
+        image_number = 0;
+    }
+
     for (i = optind; i < argc; i++) {
         if (read_JSON) {
             SBMetadataResult *meta = read_json(json_file);
