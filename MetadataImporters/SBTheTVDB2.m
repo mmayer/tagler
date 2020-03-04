@@ -153,18 +153,29 @@ NSString *banner_url = BANNER_URL;
     return resultJson[@"data"];
 }
 
+// The series search may return more than one hit.
+// Search all hits for the one with the matching name.
+- (NSInteger)findSeriesIndex:(NSArray *)seriesArray forSeriesName:(NSString *)name
+{
+    for (int i = 0; i < seriesArray.count; i++) {
+        if ([seriesArray[i][@"seriesName"] isEqualTo:name]) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 - (NSString *)getSeriesID:(NSString *)name
 {
     NSString *encodedName = [name stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     NSURL *search_url = [NSURL URLWithString:
                          [NSString stringWithFormat:@"%@/search/series?name=%@",
                           api_url, encodedName]];
-    NSArray *ret = [self queryDB:search_url];
+    NSArray *result = [self queryDB:search_url];
+    NSInteger index = [self findSeriesIndex:result forSeriesName:name];
 
-    // We know the array entries are dictionaries, so we cast it
-    NSDictionary *series = ret[0];
-
-    return series[@"id"];
+    return index < 0 ? nil : result[index][@"id"];
 }
 
 - (NSArray *)getArtwork:(NSString *)series_id withKey:(NSString *)key withSubKey:(NSString *)subKey
