@@ -38,7 +38,7 @@ NSString *banner_url = BANNER_URL;
 
 + (NSString *)createList:(NSArray *)source usingField:(NSString *)field separatedBy:(NSString *)sep
 {
-    NSMutableString *s = [[NSMutableString alloc] init];
+    NSMutableString *s = [NSMutableString string];
 
     for (NSDictionary *entry in source) {
         if ([s length] > 0) {
@@ -57,7 +57,7 @@ NSString *banner_url = BANNER_URL;
     for (NSDictionary *a in artwork) {
         NSString *provider = [NSString stringWithFormat:@"TheTVDB|%@", a[@"keyType"]];
         if (!result) {
-            result = [[NSMutableArray alloc] init];
+            result = [NSMutableArray array];
         }
         [result addObject:provider];
     }
@@ -73,7 +73,7 @@ NSString *banner_url = BANNER_URL;
         if (path) {
             NSURL *url = [NSURL URLWithString:[banner_url stringByAppendingString:path]];
             if (!result) {
-                result = [[NSMutableArray alloc] init];
+                result = [NSMutableArray array];
             }
             [result addObject:url];
         }

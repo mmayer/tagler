@@ -47,10 +47,9 @@ NSString *const SBMetadataResultNetwork = @"{Network}";
 
 - (instancetype)init
 {
-    if ((self = [super init]))
-    {
-        _tags = [[NSMutableDictionary alloc] init];
-        _artworks = [[NSMutableArray alloc] init];
+    if (self = [super init]) {
+        _tags = [NSMutableDictionary dictionary];
+        _artworks = [NSMutableArray array];
     }
 
     return self;
@@ -90,7 +89,7 @@ NSString *const SBMetadataResultNetwork = @"{Network}";
 {
     NSArray *keys;
     BOOL isTVShow = (_tags[SBMetadataResultSeriesName] != nil);
-    NSMutableString *desc = [[NSMutableString alloc] init];
+    NSMutableString *desc = [NSMutableString string];
 
     if (isTVShow) {
         keys = [SBMetadataResult tvShowKeys];
@@ -164,7 +163,7 @@ NSString *const SBMetadataResultNetwork = @"{Network}";
 
 + (NSArray<NSString *> *)artworkURLsToStrings:(NSArray<NSURL *> *)artworkURL
 {
-    NSMutableArray *arr = [[NSMutableArray alloc] init];
+    NSMutableArray *arr = [NSMutableArray array];
 
     for (NSURL *u in artworkURL) {
         [arr addObject:[u absoluteString]];
@@ -175,7 +174,7 @@ NSString *const SBMetadataResultNetwork = @"{Network}";
 
 + (NSArray<NSURL *> *)artworkStringsToURLs:(NSArray<NSString *> *)artworkString
 {
-    NSMutableArray *arr = [[NSMutableArray alloc] init];
+    NSMutableArray *arr = [NSMutableArray array];
 
     for (NSString *s in artworkString) {
         [arr addObject:[NSURL URLWithString:s]];
