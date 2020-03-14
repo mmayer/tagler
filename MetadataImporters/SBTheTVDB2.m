@@ -157,8 +157,15 @@ NSString *banner_url = BANNER_URL;
 // Search all hits for the one with the matching name.
 - (NSInteger)findSeriesIndex:(NSArray *)seriesArray forSeriesName:(NSString *)name
 {
+    NSCharacterSet *punct = [NSCharacterSet punctuationCharacterSet];
+    NSString *strippedName = [[name componentsSeparatedByCharactersInSet:punct]
+                              componentsJoinedByString:@""];
+
     for (int i = 0; i < seriesArray.count; i++) {
-        if ([seriesArray[i][@"seriesName"] isEqualTo:name]) {
+        NSString *seriesName = [[seriesArray[i][@"seriesName"]
+                                 componentsSeparatedByCharactersInSet:punct]
+                                 componentsJoinedByString:@""];
+        if ([seriesName isEqualTo:strippedName]) {
             return i;
         }
     }
