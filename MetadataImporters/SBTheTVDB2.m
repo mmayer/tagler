@@ -153,10 +153,37 @@ NSString *banner_url = BANNER_URL;
     return resultJson[@"data"];
 }
 
+- (bool)matchSeriesAlias:(NSArray *)aliases forSeriesName:(NSString *)name
+{
+    for (int i = 0; i < aliases.count; i++) {
+        if ([aliases[i] isEqualTo:name]) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 // The series search may return more than one hit.
 // Search all hits for the one with the matching name.
 - (NSInteger)findSeriesIndex:(NSArray *)seriesArray forSeriesName:(NSString *)name
 {
+    // Try to match the name straight up
+    for (int i = 0; i < seriesArray.count; i++) {
+        if ([seriesArray[i][@"seriesName"] isEqualTo:name]) {
+            return i;
+        }
+    }
+
+    // Try to match one of the aliases
+    for (int i = 0; i < seriesArray.count; i++) {
+        if ([self matchSeriesAlias:seriesArray[i][@"aliases"]
+                     forSeriesName:name]) {
+            return i;
+        }
+    }
+
+    // Lastly, try to match the series name with all punctuation stripped
     NSCharacterSet *punct = [NSCharacterSet punctuationCharacterSet];
     NSString *strippedName = [[name componentsSeparatedByCharactersInSet:punct]
                               componentsJoinedByString:@""];
